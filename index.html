@@ -595,7 +595,7 @@ function revealAncestors(node) {
 function doSearch(q) {
   const term = q.toLowerCase().trim();
 
-  // Remove previous highlights
+  // Remove old highlights
   allNodes.forEach(n => {
     if (n._el) {
       n._el.querySelector('.card').classList.remove('highlight');
@@ -604,7 +604,7 @@ function doSearch(q) {
 
   if (!term) return;
 
-  // Find first matching node
+  // Find matching node
   const found = allNodes.find(n => {
     const name = (n._el.dataset.name || '');
     const title = (n._el.dataset.title || '');
@@ -613,27 +613,40 @@ function doSearch(q) {
 
   if (!found) return;
 
-  // Reveal parents
+  // Open parent hierarchy
   revealAncestors(found);
 
-  // Highlight
+  // Highlight card
   const card = found._el.querySelector('.card');
   card.classList.add('highlight');
 
-  // Auto zoom (optional)
+  // Auto zoom
   const zoom = 1;
   canvas.style.transform = `scale(${zoom})`;
   slider.value = zoom * 100;
   zoomLabel.textContent = `${zoom * 100}%`;
 
-  // Smooth scroll to card
+  // Manual smooth center scroll
   setTimeout(() => {
-    card.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'center'
+
+    const wrap = document.getElementById('canvas-wrap');
+
+    const cardRect = card.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+
+    const offsetLeft =
+      cardRect.left - wrapRect.left + wrap.scrollLeft;
+
+    const offsetTop =
+      cardRect.top - wrapRect.top + wrap.scrollTop;
+
+    wrap.scrollTo({
+      left: offsetLeft - wrap.clientWidth / 2 + cardRect.width / 2,
+      top: offsetTop - wrap.clientHeight / 2 + cardRect.height / 2,
+      behavior: 'smooth'
     });
-  }, 250);
+
+  }, 300);
 }
 // ── Zoom ──
 const slider = document.getElementById('zoom-slider');
