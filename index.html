@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Org Chart</title>
   <style>
-    /* ── RESET & BASE ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -17,7 +16,6 @@
       overflow: hidden;
     }
 
-    /* ── TOOLBAR ── */
     #toolbar {
       display: flex;
       align-items: center;
@@ -88,10 +86,7 @@
       font-size: 13px;
     }
 
-    /* ── STATUS BAR ── */
     #status-bar {
-      background: #fff3cd;
-      color: #856404;
       font-size: 13px;
       padding: 6px 20px;
       display: none;
@@ -99,11 +94,10 @@
       gap: 8px;
       flex-shrink: 0;
     }
-    #status-bar.visible { display: flex; }
-    #status-bar.error { background: #f8d7da; color: #721c24; }
-    #status-bar.success { background: #d1e7dd; color: #0a3622; }
+    #status-bar.visible        { display: flex; background: #fff3cd; color: #856404; }
+    #status-bar.visible.error  { background: #f8d7da; color: #721c24; }
+    #status-bar.visible.success{ background: #d1e7dd; color: #0a3622; }
 
-    /* ── CANVAS WRAPPER ── */
     #canvas-wrap {
       flex: 1;
       overflow: auto;
@@ -115,14 +109,12 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0;
       transform-origin: top left;
       transition: transform 0.2s;
       width: max-content;
       min-width: 100%;
     }
 
-    /* ── NODE STRUCTURE ── */
     .node {
       display: flex;
       flex-direction: column;
@@ -139,7 +131,6 @@
       display: flex;
       flex-direction: row;
       align-items: flex-start;
-      gap: 0;
     }
 
     .child-col {
@@ -148,7 +139,6 @@
       align-items: center;
     }
 
-    /* ── CONNECTOR LINES ── */
     .v-line {
       width: 2px;
       height: 24px;
@@ -156,11 +146,8 @@
       flex-shrink: 0;
     }
 
-    .children-row .child-col > .v-line {
-      height: 20px;
-    }
+    .children-row .child-col > .v-line { height: 20px; }
 
-    /* ── CARD ── */
     .card {
       position: relative;
       width: 160px;
@@ -174,13 +161,8 @@
       border-top: 4px solid #ccc;
       margin: 0 6px;
     }
+    .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.15); transform: translateY(-2px); }
 
-    .card:hover {
-      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-      transform: translateY(-2px);
-    }
-
-    /* level border colors */
     .lvl-0 .card { border-top-color: #0d3b6e; }
     .lvl-1 .card { border-top-color: #1565c0; }
     .lvl-2 .card { border-top-color: #00acc1; }
@@ -199,43 +181,17 @@
       font-weight: 700;
       color: #fff;
       margin: 0 auto 8px;
-      letter-spacing: 0.5px;
     }
 
-    .card-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #1a2540;
-      line-height: 1.3;
-      margin-bottom: 4px;
-      word-break: break-word;
-    }
+    .card-name  { font-size: 13px; font-weight: 700; color: #1a2540; line-height: 1.3; margin-bottom: 4px; word-break: break-word; }
+    .card-title { font-size: 11px; color: #5a6a85; line-height: 1.3; margin-bottom: 6px; word-break: break-word; }
+    .card-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: #eef2ff; color: #3549a0; }
 
-    .card-title {
-      font-size: 11px;
-      color: #5a6a85;
-      line-height: 1.3;
-      margin-bottom: 6px;
-      word-break: break-word;
-    }
-
-    .card-badge {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 10px;
-      background: #eef2ff;
-      color: #3549a0;
-    }
-
-    /* highlight from search */
     .card.highlight {
       box-shadow: 0 0 0 3px #f59e0b, 0 6px 20px rgba(245,158,11,0.3);
       transform: translateY(-2px);
     }
 
-    /* ── COLLAPSE BUTTON ── */
     .collapse-btn {
       position: absolute;
       bottom: -12px;
@@ -257,11 +213,10 @@
     }
     .collapse-btn:hover { background: #0d3b6e; }
 
-    /* ── LOADING SPINNER ── */
     #loading {
       position: fixed;
       inset: 0;
-      background: rgba(240,244,248,0.85);
+      background: rgba(240,244,248,0.9);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -272,8 +227,7 @@
     #loading.hidden { display: none; }
 
     .spinner {
-      width: 48px;
-      height: 48px;
+      width: 48px; height: 48px;
       border: 5px solid #b0c4de;
       border-top-color: #1565c0;
       border-radius: 50%;
@@ -281,528 +235,399 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .loading-text {
-      font-size: 15px;
-      color: #1a2540;
-      font-weight: 600;
-    }
+    .loading-text { font-size: 15px; color: #1a2540; font-weight: 600; }
   </style>
 </head>
 <body>
 
-  <!-- LOADING OVERLAY -->
   <div id="loading">
     <div class="spinner"></div>
     <div class="loading-text">Loading org chart…</div>
   </div>
 
-  <!-- TOOLBAR -->
   <div id="toolbar">
-    <img id="logo-img" src="logo.jpg.png" alt="Logo"
-         onerror="this.style.display='none'" />
+    <img id="logo-img" src="logo.jpg.png" alt="Logo" onerror="this.style.display='none'" />
     <span class="toolbar-title">Organization Chart</span>
-
-    <input
-      type="text"
-      id="search"
-      placeholder="Search name or title…"
-    />
-
+    <input type="text" id="search" placeholder="Search name or title…" />
     <button class="toolbar-btn" onclick="expandAll()">Expand All</button>
     <button class="toolbar-btn" onclick="collapseAll()">Collapse All</button>
-
     <div class="zoom-group">
       <span>Zoom</span>
-      <input
-        type="range"
-        id="zoom-slider"
-        min="10"
-        max="150"
-        value="80"
-      />
+      <input type="range" id="zoom-slider" min="10" max="150" value="80" />
       <span id="zoom-label">80%</span>
     </div>
   </div>
 
-  <!-- STATUS BAR -->
   <div id="status-bar"></div>
 
-  <!-- CANVAS -->
   <div id="canvas-wrap">
     <div id="org-canvas"></div>
   </div>
 
-  <script>
-    // ─────────────────────────────────────────────
-    // GLOBALS
-    // ─────────────────────────────────────────────
+<script>
+  // ── GLOBALS ──
+  let people  = [];
+  let byName  = {};
+  let byNorm  = {};
+  let roots   = [];
+  const collapsed = new Set();
+  const allNodes  = [];
 
-    let people  = [];
-    let byName  = {};
-    let roots   = [];
+  const canvas    = document.getElementById('org-canvas');
+  const slider    = document.getElementById('zoom-slider');
+  const zoomLabel = document.getElementById('zoom-label');
+  const statusBar = document.getElementById('status-bar');
+  const loadingEl = document.getElementById('loading');
 
-    const collapsed = new Set();
-    const allNodes  = [];
+  // ── STATUS ──
+  function showStatus(msg, type='info') {
+    statusBar.textContent = msg;
+    statusBar.className   = 'visible ' + type;
+  }
+  function hideStatus() { statusBar.className = ''; }
+  function hideLoading() { loadingEl.classList.add('hidden'); }
 
-    const canvas     = document.getElementById('org-canvas');
-    const slider     = document.getElementById('zoom-slider');
-    const zoomLabel  = document.getElementById('zoom-label');
-    const statusBar  = document.getElementById('status-bar');
-    const loadingEl  = document.getElementById('loading');
+  // ── NORMALIZE names: lowercase, collapse whitespace, strip invisible chars ──
+  function norm(str) {
+    return (str || '')
+      .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
 
-    // ─────────────────────────────────────────────
-    // STATUS HELPERS
-    // ─────────────────────────────────────────────
+  function findNode(name) {
+    if (!name) return null;
+    return byName[name] || byNorm[norm(name)] || null;
+  }
 
-    function showStatus(msg, type = 'info') {
-      statusBar.textContent = msg;
-      statusBar.className   = 'visible ' + type;
-    }
+  // ── LOAD SHEET ──
+  async function loadPeople() {
+    const SHEET_ID = '1kO9rERWJgxg-OXUn8vOsnx2UydEWWU6P88J23Yhuqi4';
+    const GID      = '0';
+    const CSV_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
-    function hideStatus() {
-      statusBar.className = '';
-    }
+    try {
+      showStatus('Loading org chart data…', 'info');
+      const response = await fetch(CSV_URL);
+      if (!response.ok) throw new Error(`HTTP ${response.status}. Make sure the sheet is shared as "Anyone with the link can view".`);
 
-    function hideLoading() {
-      loadingEl.classList.add('hidden');
-    }
+      const csvText = await response.text();
+      if (!csvText || csvText.trim().length === 0) throw new Error('Sheet returned empty data.');
 
-    // ─────────────────────────────────────────────
-    // LOAD GOOGLE SHEET
-    // ─────────────────────────────────────────────
+      const rows = parseCSV(csvText);
+      if (rows.length < 2) throw new Error('Sheet has no data rows.');
 
-    async function loadPeople() {
+      const headers    = rows[0].map(h => h.trim());
+      const nameIdx    = headers.findIndex(h => h.toLowerCase() === 'name');
+      const titleIdx   = headers.findIndex(h => h.toLowerCase() === 'title');
+      const managerIdx = headers.findIndex(h => h.toLowerCase() === 'direct manager');
+      const levelIdx   = headers.findIndex(h => h.toLowerCase() === 'hierarchy level');
 
-      const SHEET_ID  = '1kO9rERWJgxg-OXUn8vOsnx2UydEWWU6P88J23Yhuqi4';
-      const GID       = '0'; // Sheet1 is always gid=0; change if using another tab
+      if (nameIdx === -1) throw new Error('Could not find a "Name" column.');
 
-      // Google's native CSV export — no proxy, no API key, works everywhere
-      // Sheet must be: File → Share → Publish to web  OR  shared as "Anyone with link can view"
-      const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
-
-      try {
-        showStatus('Loading org chart data…', 'info');
-
-        const response = await fetch(CSV_URL);
-
-        if (!response.ok) {
-          throw new Error(
-            `HTTP ${response.status}. Make sure the Google Sheet is shared as "Anyone with the link can view".`
-          );
-        }
-
-        const csvText = await response.text();
-
-        if (!csvText || csvText.trim().length === 0) {
-          throw new Error('Sheet returned empty data.');
-        }
-
-        const rows = parseCSV(csvText);
-
-        if (rows.length < 2) {
-          throw new Error('Sheet has no data rows. Check the Sheet ID and sharing settings.');
-        }
-
-        // First row is headers
-        const headers = rows[0].map(h => h.trim());
-        const nameIdx    = headers.findIndex(h => h.toLowerCase() === 'name');
-        const titleIdx   = headers.findIndex(h => h.toLowerCase() === 'title');
-        const managerIdx = headers.findIndex(h => h.toLowerCase() === 'direct manager');
-        const levelIdx   = headers.findIndex(h => h.toLowerCase() === 'hierarchy level');
-
-        if (nameIdx === -1) {
-          throw new Error('Could not find a "Name" column. Check your sheet headers.');
-        }
-
-        people = rows.slice(1)
-          .filter(row => row[nameIdx] && row[nameIdx].trim() !== '')
-          .map(row => {
-            const mgr = managerIdx !== -1 ? (row[managerIdx] || '').trim() : '';
-            return {
-              name:    row[nameIdx].trim(),
-              title:   titleIdx   !== -1 ? (row[titleIdx]   || '').trim() : '',
-              manager: mgr !== '' && mgr !== '-' ? mgr : null,
-              level:   levelIdx   !== -1 && row[levelIdx] && row[levelIdx].trim() !== ''
-                         ? Number(row[levelIdx])
-                         : 5
-            };
-          });
-
-        if (people.length === 0) {
-          throw new Error('No valid rows found. Make sure the "Name" column has data.');
-        }
-
-        hideStatus();
-        buildTree();
-        hideLoading();
-
-      } catch (err) {
-        hideLoading();
-        showStatus('⚠ ' + err.message, 'error');
-        console.error('loadPeople error:', err);
-      }
-    }
-
-    // ─────────────────────────────────────────────
-    // CSV PARSER  (handles quoted fields & commas inside values)
-    // ─────────────────────────────────────────────
-
-    function parseCSV(text) {
-      const rows   = [];
-      const lines  = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
-
-      for (const line of lines) {
-        if (line.trim() === '') continue;
-        const cells = [];
-        let cur = '';
-        let inQ = false;
-
-        for (let i = 0; i < line.length; i++) {
-          const ch = line[i];
-          if (ch === '"') {
-            if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
-            else { inQ = !inQ; }
-          } else if (ch === ',' && !inQ) {
-            cells.push(cur);
-            cur = '';
-          } else {
-            cur += ch;
-          }
-        }
-        cells.push(cur);
-        rows.push(cells);
-      }
-      return rows;
-    }
-
-    // ─────────────────────────────────────────────
-    // BUILD TREE
-    // ─────────────────────────────────────────────
-
-    function buildTree() {
-
-      byName = {};
-      roots  = [];
-      collapsed.clear();
-      allNodes.length = 0;
-
-      people.forEach(person => {
-        byName[person.name] = { ...person, children: [] };
-      });
-
-      people.forEach(person => {
-        const node = byName[person.name];
-        if (!person.manager || !byName[person.manager]) {
-          roots.push(node);
-        } else {
-          byName[person.manager].children.push(node);
-        }
-      });
-
-      canvas.innerHTML = '';
-
-      if (roots.length === 0) {
-        showStatus('No root nodes found — every person has a manager that does not exist in the sheet.', 'error');
-        return;
-      }
-
-      roots.forEach(root => {
-        canvas.appendChild(buildNode(root));
-      });
-
-      collapseAll();
-      autoFitZoom();
-    }
-
-    // ─────────────────────────────────────────────
-    // COLORS
-    // ─────────────────────────────────────────────
-
-    const COLORS = [
-      '#0d3b6e', '#1565c0', '#00acc1',
-      '#42a5f5', '#7ec8e3', '#90caf9'
-    ];
-
-    function levelColor(level) {
-      return COLORS[Math.min(level, 5)];
-    }
-
-    // ─────────────────────────────────────────────
-    // HELPERS
-    // ─────────────────────────────────────────────
-
-    function initials(name) {
-      return (name || '')
-        .replace(/_TL\d+$/, '')
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map(w => w[0].toUpperCase())
-        .join('');
-    }
-
-    function shortName(name) {
-      const clean = (name || '').replace(/_TL\d+$/, '');
-      const parts = clean.split(' ').filter(Boolean);
-      if (parts.length <= 3) return clean;
-      return parts[0] + ' ' + parts[1] + ' ' + parts[parts.length - 1];
-    }
-
-    function badgeLabel(level) {
-      return ['Executive','Director','Manager','Senior','Team Leader','Staff'][Math.min(level, 5)];
-    }
-
-    // ─────────────────────────────────────────────
-    // BUILD NODE
-    // ─────────────────────────────────────────────
-
-    function buildNode(node) {
-
-      allNodes.push(node);
-
-      const level = node.level !== null && !isNaN(node.level)
-        ? Number(node.level)
-        : 5;
-
-      const wrap       = document.createElement('div');
-      wrap.className   = `node lvl-${Math.min(level, 5)}`;
-      wrap.dataset.name  = (node.name  || '').toLowerCase();
-      wrap.dataset.title = (node.title || '').toLowerCase();
-
-      // ── CARD ──
-      const card     = document.createElement('div');
-      card.className = 'card';
-
-      const gradA = levelColor(level);
-      const gradB = levelColor(Math.min(level + 1, 5));
-
-      card.innerHTML = `
-        <div class="card-avatar" style="background:linear-gradient(135deg,${gradA},${gradB})">
-          ${initials(node.name)}
-        </div>
-        <div class="card-name">${escHtml(shortName(node.name))}</div>
-        <div class="card-title">${escHtml(node.title || '')}</div>
-        <div class="card-badge">${badgeLabel(level)}</div>
-      `;
-
-      wrap.appendChild(card);
-
-      // ── CHILDREN ──
-      if (node.children && node.children.length > 0) {
-
-        const btn       = document.createElement('div');
-        btn.className   = 'collapse-btn';
-        btn.textContent = '−';
-        btn.title       = 'Expand / Collapse';
-        card.appendChild(btn);
-
-        const childrenWrap       = document.createElement('div');
-        childrenWrap.className   = 'children-wrap';
-
-        const vLine       = document.createElement('div');
-        vLine.className   = 'v-line';
-        childrenWrap.appendChild(vLine);
-
-        const row       = document.createElement('div');
-        row.className   = 'children-row';
-
-        node.children.forEach(child => {
-          const col       = document.createElement('div');
-          col.className   = 'child-col';
-
-          const childLine       = document.createElement('div');
-          childLine.className   = 'v-line';
-          col.appendChild(childLine);
-          col.appendChild(buildNode(child));
-          row.appendChild(col);
+      people = rows.slice(1)
+        .filter(row => row[nameIdx] && row[nameIdx].trim() !== '')
+        .map(row => {
+          const mgr = managerIdx !== -1 ? (row[managerIdx] || '').trim() : '';
+          return {
+            name:    row[nameIdx].trim(),
+            title:   titleIdx   !== -1 ? (row[titleIdx]   || '').trim() : '',
+            manager: mgr !== '' && mgr !== '-' ? mgr : null,
+            level:   levelIdx   !== -1 && row[levelIdx] && row[levelIdx].trim() !== ''
+                       ? Number(row[levelIdx]) : 5
+          };
         });
 
-        childrenWrap.appendChild(row);
-        wrap.appendChild(childrenWrap);
-
-        node._childrenWrap = childrenWrap;
-        node._btn          = btn;
-
-        btn.addEventListener('click', e => {
-          e.stopPropagation();
-          toggleNode(node.name, childrenWrap, btn);
-        });
-      }
-
-      node._el = wrap;
-      return wrap;
-    }
-
-    // ─────────────────────────────────────────────
-    // XSS SAFETY
-    // ─────────────────────────────────────────────
-
-    function escHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
-    // ─────────────────────────────────────────────
-    // TOGGLE
-    // ─────────────────────────────────────────────
-
-    function toggleNode(name, wrap, btn) {
-      if (collapsed.has(name)) {
-        collapsed.delete(name);
-        wrap.style.display = '';
-        btn.textContent    = '−';
-      } else {
-        collapsed.add(name);
-        wrap.style.display = 'none';
-        btn.textContent    = '+';
-      }
-    }
-
-    // ─────────────────────────────────────────────
-    // EXPAND / COLLAPSE ALL
-    // ─────────────────────────────────────────────
-
-    function expandAll() {
-      collapsed.clear();
-      allNodes.forEach(node => {
-        if (node._childrenWrap) {
-          node._childrenWrap.style.display = '';
-          node._btn.textContent            = '−';
-        }
-      });
-    }
-
-    function collapseAll() {
-      allNodes.forEach(node => {
-        if (node._childrenWrap && node.manager) {
-          collapsed.add(node.name);
-          node._childrenWrap.style.display = 'none';
-          node._btn.textContent            = '+';
-        }
-      });
-    }
-
-    // ─────────────────────────────────────────────
-    // SEARCH
-    // ─────────────────────────────────────────────
-
-    function revealAncestors(node) {
-      let current = node;
-      while (current.manager) {
-        const mgr = byName[current.manager];
-        if (!mgr) break;
-        if (mgr._childrenWrap && collapsed.has(mgr.name)) {
-          collapsed.delete(mgr.name);
-          mgr._childrenWrap.style.display = '';
-          mgr._btn.textContent            = '−';
-        }
-        current = mgr;
-      }
-    }
-
-    function doSearch(query) {
-
-      // clear old highlights
-      allNodes.forEach(node => {
-        if (node._el) {
-          node._el.querySelector('.card').classList.remove('highlight');
-        }
-      });
-
-      const term = query.toLowerCase().trim();
-      if (!term) return;
-
-      // find ALL matches
-      const found = allNodes.filter(node => {
-        const name  = node._el ? node._el.dataset.name  || '' : '';
-        const title = node._el ? node._el.dataset.title || '' : '';
-        return name.includes(term) || title.includes(term);
-      });
-
-      if (found.length === 0) {
-        showStatus(`No results for "${query}"`, 'info');
-        return;
-      }
+      if (people.length === 0) throw new Error('No valid rows found.');
 
       hideStatus();
+      buildTree();
+      hideLoading();
 
-      // highlight all, scroll to first
-      found.forEach(node => {
-        revealAncestors(node);
-        node._el.querySelector('.card').classList.add('highlight');
-      });
+    } catch (err) {
+      hideLoading();
+      showStatus('⚠ ' + err.message, 'error');
+      console.error(err);
+    }
+  }
 
-      const firstCard = found[0]._el.querySelector('.card');
+  // ── CSV PARSER ──
+  function parseCSV(text) {
+    const rows  = [];
+    const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+    for (const line of lines) {
+      if (line.trim() === '') continue;
+      const cells = [];
+      let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+          else inQ = !inQ;
+        } else if (ch === ',' && !inQ) { cells.push(cur); cur = ''; }
+        else cur += ch;
+      }
+      cells.push(cur);
+      rows.push(cells);
+    }
+    return rows;
+  }
 
-      applyZoom(100);
+  // ── BUILD TREE ──
+  function buildTree() {
+    byName = {};
+    byNorm = {};
+    roots  = [];
+    collapsed.clear();
+    allNodes.length = 0;
 
-      setTimeout(() => {
-        const wrap     = document.getElementById('canvas-wrap');
-        const cardRect = firstCard.getBoundingClientRect();
-        const wrapRect = wrap.getBoundingClientRect();
+    // Index every person by exact name AND normalized name
+    people.forEach(person => {
+      const node = { ...person, children: [] };
+      byName[person.name]       = node;
+      byNorm[norm(person.name)] = node;
+    });
 
-        wrap.scrollTo({
-          left: cardRect.left - wrapRect.left + wrap.scrollLeft
-                - wrap.clientWidth / 2 + cardRect.width / 2,
-          top:  cardRect.top  - wrapRect.top  + wrap.scrollTop
-                - wrap.clientHeight / 2 + cardRect.height / 2,
-          behavior: 'smooth'
-        });
-      }, 300);
+    // Attach children; fall back to normalized lookup if exact fails
+    const unmatched = [];
+    people.forEach(person => {
+      const node = byName[person.name];
+      if (!person.manager) {
+        roots.push(node);
+        return;
+      }
+      const mgr = findNode(person.manager);
+      if (mgr) {
+        mgr.children.push(node);
+      } else {
+        roots.push(node); // orphan → show at top
+        unmatched.push(`"${person.name}" → manager: "${person.manager}"`);
+      }
+    });
+
+    canvas.innerHTML = '';
+
+    if (roots.length === 0) {
+      showStatus('No root nodes found.', 'error');
+      return;
     }
 
-    // ─────────────────────────────────────────────
-    // ZOOM HELPERS
-    // ─────────────────────────────────────────────
-
-    function applyZoom(pct) {
-      const zoom = pct / 100;
-      canvas.style.transform = `scale(${zoom})`;
-      slider.value           = pct;
-      zoomLabel.textContent  = pct + '%';
+    // Warn about genuinely unmatched managers
+    if (unmatched.length > 0) {
+      showStatus(
+        `⚠ ${unmatched.length} employee(s) have unmatched manager names in the sheet (showing at top level): ` +
+        unmatched.join(' | '),
+        'info'
+      );
     }
 
-    // Auto-fit: shrink zoom so the whole tree is visible on load
-    function autoFitZoom() {
+    roots.forEach(root => canvas.appendChild(buildNode(root)));
+
+    collapseAll();
+
+    // Auto-fit: wait for DOM paint after collapse before measuring
+    setTimeout(() => {
+      const wrap   = document.getElementById('canvas-wrap');
+      const availW = wrap.clientWidth  - 60;
+      const availH = wrap.clientHeight - 60;
+
+      // Temporarily reveal at full scale to measure
+      canvas.style.transition = 'none';
+      canvas.style.transform  = 'scale(1)';
+
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {           // double-rAF ensures layout is flushed
-          const wrap   = document.getElementById('canvas-wrap');
-          const availW = wrap.clientWidth  - 80;
-          const availH = wrap.clientHeight - 80;
+        const canvasW = canvas.scrollWidth;
+        const canvasH = canvas.scrollHeight;
 
-          // measure canvas at scale(1)
-          canvas.style.transform = 'scale(1)';
-          const canvasW = canvas.scrollWidth;
-          const canvasH = canvas.scrollHeight;
+        const fitZoom = Math.min(availW / canvasW, availH / canvasH, 1);
+        const pct     = Math.max(Math.round(fitZoom * 100), 10);
 
-          const fitZoom = Math.min(availW / canvasW, availH / canvasH, 1);
-          const pct     = Math.max(Math.round(fitZoom * 100), 10);
+        canvas.style.transition = '';
+        applyZoom(pct);
+      });
+    }, 100);
+  }
 
-          applyZoom(pct);
-        });
+  // ── COLORS ──
+  const COLORS = ['#0d3b6e','#1565c0','#00acc1','#42a5f5','#7ec8e3','#90caf9'];
+  function levelColor(l) { return COLORS[Math.min(l, 5)]; }
+
+  // ── HELPERS ──
+  function initials(name) {
+    return (name||'').replace(/_TL\d+$/,'').split(' ').filter(Boolean)
+      .slice(0,2).map(w=>w[0].toUpperCase()).join('');
+  }
+  function shortName(name) {
+    const parts = (name||'').replace(/_TL\d+$/,'').split(' ').filter(Boolean);
+    if (parts.length <= 3) return parts.join(' ');
+    return parts[0]+' '+parts[1]+' '+parts[parts.length-1];
+  }
+  function badgeLabel(l) {
+    return ['Executive','Director','Manager','Senior','Team Leader','Staff'][Math.min(l,5)];
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── BUILD NODE ──
+  function buildNode(node) {
+    allNodes.push(node);
+    const level = !isNaN(node.level) ? Number(node.level) : 5;
+
+    const wrap = document.createElement('div');
+    wrap.className     = `node lvl-${Math.min(level,5)}`;
+    wrap.dataset.name  = (node.name  || '').toLowerCase();
+    wrap.dataset.title = (node.title || '').toLowerCase();
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-avatar" style="background:linear-gradient(135deg,${levelColor(level)},${levelColor(Math.min(level+1,5))})">
+        ${initials(node.name)}
+      </div>
+      <div class="card-name">${escHtml(shortName(node.name))}</div>
+      <div class="card-title">${escHtml(node.title||'')}</div>
+      <div class="card-badge">${badgeLabel(level)}</div>
+    `;
+    wrap.appendChild(card);
+
+    if (node.children && node.children.length > 0) {
+      const btn = document.createElement('div');
+      btn.className   = 'collapse-btn';
+      btn.textContent = '−';
+      btn.title       = 'Expand / Collapse';
+      card.appendChild(btn);
+
+      const childrenWrap = document.createElement('div');
+      childrenWrap.className = 'children-wrap';
+
+      const vLine = document.createElement('div');
+      vLine.className = 'v-line';
+      childrenWrap.appendChild(vLine);
+
+      const row = document.createElement('div');
+      row.className = 'children-row';
+
+      node.children.forEach(child => {
+        const col = document.createElement('div');
+        col.className = 'child-col';
+        const cl = document.createElement('div');
+        cl.className = 'v-line';
+        col.appendChild(cl);
+        col.appendChild(buildNode(child));
+        row.appendChild(col);
+      });
+
+      childrenWrap.appendChild(row);
+      wrap.appendChild(childrenWrap);
+
+      node._childrenWrap = childrenWrap;
+      node._btn          = btn;
+
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        toggleNode(node.name, childrenWrap, btn);
       });
     }
 
-    slider.addEventListener('input', () => {
-      applyZoom(Number(slider.value));
+    node._el = wrap;
+    return wrap;
+  }
+
+  // ── TOGGLE ──
+  function toggleNode(name, wrap, btn) {
+    if (collapsed.has(name)) {
+      collapsed.delete(name);
+      wrap.style.display = '';
+      btn.textContent    = '−';
+    } else {
+      collapsed.add(name);
+      wrap.style.display = 'none';
+      btn.textContent    = '+';
+    }
+  }
+
+  // ── EXPAND / COLLAPSE ALL ──
+  function expandAll() {
+    collapsed.clear();
+    allNodes.forEach(n => {
+      if (n._childrenWrap) { n._childrenWrap.style.display=''; n._btn.textContent='−'; }
+    });
+  }
+  function collapseAll() {
+    allNodes.forEach(n => {
+      if (n._childrenWrap && n.manager) {
+        collapsed.add(n.name);
+        n._childrenWrap.style.display = 'none';
+        n._btn.textContent            = '+';
+      }
+    });
+  }
+
+  // ── SEARCH ──
+  function revealAncestors(node) {
+    let cur = node;
+    while (cur.manager) {
+      const mgr = findNode(cur.manager);
+      if (!mgr) break;
+      if (mgr._childrenWrap && collapsed.has(mgr.name)) {
+        collapsed.delete(mgr.name);
+        mgr._childrenWrap.style.display = '';
+        mgr._btn.textContent            = '−';
+      }
+      cur = mgr;
+    }
+  }
+
+  function doSearch(query) {
+    allNodes.forEach(n => {
+      if (n._el) n._el.querySelector('.card').classList.remove('highlight');
     });
 
-    // ─────────────────────────────────────────────
-    // SEARCH INPUT
-    // ─────────────────────────────────────────────
+    const term = query.toLowerCase().trim();
+    if (!term) { hideStatus(); return; }
 
-    document.getElementById('search').addEventListener('input', function () {
-      doSearch(this.value);
+    const found = allNodes.filter(n => {
+      const nm = n._el ? n._el.dataset.name  || '' : '';
+      const ti = n._el ? n._el.dataset.title || '' : '';
+      return nm.includes(term) || ti.includes(term);
     });
 
-    // ─────────────────────────────────────────────
-    // START
-    // ─────────────────────────────────────────────
+    if (found.length === 0) { showStatus(`No results for "${query}"`, 'info'); return; }
+    hideStatus();
 
-    loadPeople();
-  </script>
+    found.forEach(n => {
+      revealAncestors(n);
+      n._el.querySelector('.card').classList.add('highlight');
+    });
+
+    applyZoom(100);
+
+    setTimeout(() => {
+      const wrap     = document.getElementById('canvas-wrap');
+      const firstCard = found[0]._el.querySelector('.card');
+      const cr = firstCard.getBoundingClientRect();
+      const wr = wrap.getBoundingClientRect();
+      wrap.scrollTo({
+        left: cr.left - wr.left + wrap.scrollLeft - wrap.clientWidth/2  + cr.width/2,
+        top:  cr.top  - wr.top  + wrap.scrollTop  - wrap.clientHeight/2 + cr.height/2,
+        behavior: 'smooth'
+      });
+    }, 300);
+  }
+
+  // ── ZOOM ──
+  function applyZoom(pct) {
+    canvas.style.transform = `scale(${pct/100})`;
+    slider.value           = pct;
+    zoomLabel.textContent  = pct + '%';
+  }
+
+  slider.addEventListener('input', () => applyZoom(Number(slider.value)));
+  document.getElementById('search').addEventListener('input', function() { doSearch(this.value); });
+
+  loadPeople();
+</script>
 </body>
 </html>
