@@ -591,7 +591,37 @@
       canvas.appendChild(buildNode(root));
     });
 
-    collapseAll();
+    applyInitialView();
+
+    function applyInitialView() {
+
+  collapsed.clear();
+
+  allNodes.forEach(n => {
+
+    if (!n._childrenWrap) return;
+
+    // CEO (root level) → always expanded
+    if (!n.manager) {
+      n._childrenWrap.style.display = '';
+      if (n._btn) n._btn.textContent = '−';
+      return;
+    }
+
+    // Level 1 (direct reports to CEO) → expanded
+    const mgr = findNode(n.manager);
+    if (mgr && !mgr.manager) {
+      n._childrenWrap.style.display = '';
+      if (n._btn) n._btn.textContent = '−';
+      return;
+    }
+
+    // Everything else collapsed
+    n._childrenWrap.style.display = 'none';
+    collapsed.add(n.name);
+    if (n._btn) n._btn.textContent = '+';
+  });
+}
 
     setTimeout(() => {
 
