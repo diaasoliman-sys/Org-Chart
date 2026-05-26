@@ -116,7 +116,7 @@
       flex-direction: column;
       align-items: center;
       gap: 0;
-      transform-origin: top center;
+      transform-origin: top left;
       transition: transform 0.2s;
       width: max-content;
       min-width: 100%;
@@ -316,7 +316,7 @@
       <input
         type="range"
         id="zoom-slider"
-        min="30"
+        min="10"
         max="150"
         value="80"
       />
@@ -373,43 +373,63 @@
 
     async function loadPeople() {
 
-      const SHEET_ID   = '1kO9rERWJgxg-OXUn8vOsnx2UydEWWU6P88J23Yhuqi4';
-      const SHEET_NAME = 'Sheet1';
-      const url        = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
+      const SHEET_ID  = '1kO9rERWJgxg-OXUn8vOsnx2UydEWWU6P88J23Yhuqi4';
+      const GID       = '0'; // Sheet1 is always gid=0; change if using another tab
+
+      // Google's native CSV export — no proxy, no API key, works everywhere
+      // Sheet must be: File → Share → Publish to web  OR  shared as "Anyone with link can view"
+      const CSV_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
       try {
-        showStatus('Fetching data from Google Sheets…', 'info');
+        showStatus('Loading org chart data…', 'info');
 
-        const response = await fetch(url);
+        const response = await fetch(CSV_URL);
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(
+            `HTTP ${response.status}. Make sure the Google Sheet is shared as "Anyone with the link can view".`
+          );
         }
 
-        const data = await response.json();
+        const csvText = await response.text();
 
-        if (!Array.isArray(data) || data.length === 0) {
-          throw new Error('Sheet returned no data. Check the Sheet ID and that it is publicly shared.');
+        if (!csvText || csvText.trim().length === 0) {
+          throw new Error('Sheet returned empty data.');
         }
 
-        people = data
-          .filter(row => row.Name && row.Name.trim() !== '')
-          .map(row => ({
-            name:    (row.Name    || '').trim(),
-            title:   (row.Title   || '').trim(),
-            manager: row['Direct manager'] &&
-                     row['Direct manager'].trim() !== '-' &&
-                     row['Direct manager'].trim() !== ''
-                       ? row['Direct manager'].trim()
-                       : null,
-            level:   row['Hierarchy Level'] &&
-                     row['Hierarchy Level'].trim() !== ''
-                       ? Number(row['Hierarchy Level'])
-                       : 5
-          }));
+        const rows = parseCSV(csvText);
+
+        if (rows.length < 2) {
+          throw new Error('Sheet has no data rows. Check the Sheet ID and sharing settings.');
+        }
+
+        // First row is headers
+        const headers = rows[0].map(h => h.trim());
+        const nameIdx    = headers.findIndex(h => h.toLowerCase() === 'name');
+        const titleIdx   = headers.findIndex(h => h.toLowerCase() === 'title');
+        const managerIdx = headers.findIndex(h => h.toLowerCase() === 'direct manager');
+        const levelIdx   = headers.findIndex(h => h.toLowerCase() === 'hierarchy level');
+
+        if (nameIdx === -1) {
+          throw new Error('Could not find a "Name" column. Check your sheet headers.');
+        }
+
+        people = rows.slice(1)
+          .filter(row => row[nameIdx] && row[nameIdx].trim() !== '')
+          .map(row => {
+            const mgr = managerIdx !== -1 ? (row[managerIdx] || '').trim() : '';
+            return {
+              name:    row[nameIdx].trim(),
+              title:   titleIdx   !== -1 ? (row[titleIdx]   || '').trim() : '',
+              manager: mgr !== '' && mgr !== '-' ? mgr : null,
+              level:   levelIdx   !== -1 && row[levelIdx] && row[levelIdx].trim() !== ''
+                         ? Number(row[levelIdx])
+                         : 5
+            };
+          });
 
         if (people.length === 0) {
-          throw new Error('No valid rows found. Make sure the "Name" column is populated.');
+          throw new Error('No valid rows found. Make sure the "Name" column has data.');
         }
 
         hideStatus();
@@ -418,9 +438,41 @@
 
       } catch (err) {
         hideLoading();
-        showStatus('⚠ Failed to load data: ' + err.message, 'error');
+        showStatus('⚠ ' + err.message, 'error');
         console.error('loadPeople error:', err);
       }
+    }
+
+    // ─────────────────────────────────────────────
+    // CSV PARSER  (handles quoted fields & commas inside values)
+    // ─────────────────────────────────────────────
+
+    function parseCSV(text) {
+      const rows   = [];
+      const lines  = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+
+      for (const line of lines) {
+        if (line.trim() === '') continue;
+        const cells = [];
+        let cur = '';
+        let inQ = false;
+
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') {
+            if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+            else { inQ = !inQ; }
+          } else if (ch === ',' && !inQ) {
+            cells.push(cur);
+            cur = '';
+          } else {
+            cur += ch;
+          }
+        }
+        cells.push(cur);
+        rows.push(cells);
+      }
+      return rows;
     }
 
     // ─────────────────────────────────────────────
@@ -458,13 +510,8 @@
         canvas.appendChild(buildNode(root));
       });
 
-      // Initial zoom
-      const zoom = 0.8;
-      canvas.style.transform = `scale(${zoom})`;
-      slider.value           = 80;
-      zoomLabel.textContent  = '80%';
-
       collapseAll();
+      autoFitZoom();
     }
 
     // ─────────────────────────────────────────────
@@ -690,9 +737,7 @@
 
       const firstCard = found[0]._el.querySelector('.card');
 
-      canvas.style.transform = 'scale(1)';
-      slider.value           = 100;
-      zoomLabel.textContent  = '100%';
+      applyZoom(100);
 
       setTimeout(() => {
         const wrap     = document.getElementById('canvas-wrap');
@@ -710,13 +755,39 @@
     }
 
     // ─────────────────────────────────────────────
-    // ZOOM
+    // ZOOM HELPERS
     // ─────────────────────────────────────────────
 
-    slider.addEventListener('input', () => {
-      const zoom = slider.value / 100;
+    function applyZoom(pct) {
+      const zoom = pct / 100;
       canvas.style.transform = `scale(${zoom})`;
-      zoomLabel.textContent  = slider.value + '%';
+      slider.value           = pct;
+      zoomLabel.textContent  = pct + '%';
+    }
+
+    // Auto-fit: shrink zoom so the whole tree is visible on load
+    function autoFitZoom() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {           // double-rAF ensures layout is flushed
+          const wrap   = document.getElementById('canvas-wrap');
+          const availW = wrap.clientWidth  - 80;
+          const availH = wrap.clientHeight - 80;
+
+          // measure canvas at scale(1)
+          canvas.style.transform = 'scale(1)';
+          const canvasW = canvas.scrollWidth;
+          const canvasH = canvas.scrollHeight;
+
+          const fitZoom = Math.min(availW / canvasW, availH / canvasH, 1);
+          const pct     = Math.max(Math.round(fitZoom * 100), 10);
+
+          applyZoom(pct);
+        });
+      });
+    }
+
+    slider.addEventListener('input', () => {
+      applyZoom(Number(slider.value));
     });
 
     // ─────────────────────────────────────────────
