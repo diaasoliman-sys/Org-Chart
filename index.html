@@ -296,185 +296,85 @@
 document.getElementById('logo-img').src = 'logo.jpg.png';
 
 // ── Full org data ──
-const people = [
-  // C-Suite & Direct Reports to CEO
-  { name:"Soha Sidhim",                                  title:"CEO",                                                  manager:null },
-  { name:"Tarek Shaker",                                  title:"General Manager",                                      manager:"Soha Sidhim" },
-  { name:"Moheb Selim",                                   title:"HR Director",                                          manager:"Soha Sidhim" },
-  { name:"Mouhab Yacoub",                                 title:"IT Director",                                           manager:"Soha Sidhim" },
-  { name:"Marco Ashraf Anwar Zaki",                       title:"Quality Manager",                                      manager:"Soha Sidhim" },
-  { name:"Kerolos Saeed Obaid Absakhron",                 title:"Accounting Manager",                                   manager:"Soha Sidhim" },
-  { name:"Marina Yosry Talaat Fahmy",                     title:"Business Development & Strategic Partnership Director", manager:"Soha Sidhim" },
-  { name:"AbdelZaher Aamer AbdelZaher Saad",              title:"WFM Director",                                         manager:"Soha Sidhim" },
-  { name:"Aya Mosaad Abd El Aziz Abd El Ghany",           title:"Marketing Manager",                                    manager:"Soha Sidhim" },
-  { name:"Mahmoud Shawki Mahmoud Abdelghafar Elbeny",     title:"Director of Operations",                               manager:"Soha Sidhim" },
-  { name:"Farah Mahmoud AboElFotouh Abdelrahman",         title:"CEO Assistant",                                        manager:"Soha Sidhim" },
-  // HR Branch
-  { name:"Shereen Helmy Mohamed Ahmed El Rayes",          title:"Head of Organization Development",                     manager:"Moheb Selim" },
-  { name:"Hossam Mohamed Naguib Rashad",                  title:"Senior Talent Acquisition",                            manager:"Moheb Selim" },
-  { name:"Hani Youssef Siddiq Mina Mikhail",              title:"Admin & Facility Manager",                             manager:"Moheb Selim" },
-  { name:"Islam Ahmed Abd El Rady Ali",                   title:"HR Generalist",                                        manager:"Moheb Selim" },
-  { name:"Nader Metry Youssef Metry",                     title:"HR Generalist",                                        manager:"Moheb Selim" },
-  { name:"Basma Maher Ramadan Malek",                     title:"Support Staff",                                        manager:"Moheb Selim" },
-  { name:"Mohamed Sobhi Shaarawy Mohamed",                title:"Support Staff",                                        manager:"Moheb Selim" },
-  // L&D
-  { name:"Reem AbdelMonaem Zidan Mohamed Zidan",          title:"L&D Specialist",                                       manager:"Shereen Helmy Mohamed Ahmed El Rayes" },
-  { name:"George Nagy Ibrahim Mikhael",                   title:"L&D Specialist",                                       manager:"Shereen Helmy Mohamed Ahmed El Rayes" },
-  // Talent Acquisition
-  { name:"Natalie Talaat Qatary Motawaa",                 title:"Talent Acquisition Specialist",                        manager:"Hossam Mohamed Naguib Rashad" },
-  { name:"Eman Mohamed Abdel-Mawla Hussein",              title:"Talent Acquisition Specialist",                        manager:"Hossam Mohamed Naguib Rashad" },
-  { name:"Nour Ammar Khouja",                             title:"Talent Acquisition Specialist",                        manager:"Hossam Mohamed Naguib Rashad" },
-  { name:"Ehab Gamal AbdelLatif Youssef",                 title:"Talent Acquisition Specialist",                        manager:"Hossam Mohamed Naguib Rashad" },
-  { name:"Malak Mohamed Ibrahim El Sayed",                title:"Talent Acquisition Specialist",                        manager:"Hossam Mohamed Naguib Rashad" },
-  { name:"Zeinab Hesham Ahmed Ragae Dabos",               title:"Talent Acquisition Specialist",                        manager:"Hossam Mohamed Naguib Rashad" },
-  { name:"Nourhan Elsayed Muslim Selmy",                  title:"Talent Acquisition Specialist",                        manager:"Hossam Mohamed Naguib Rashad" },
-  { name:"Esraa Mostafa Emam Mohamed",                    title:"Talent Acquisition Specialist",                        manager:"Hossam Mohamed Naguib Rashad" },
-  { name:"Hadeer Abdelgawwad Elsayed Hamza Othman",       title:"Talent Acquisition Specialist",                        manager:"Hossam Mohamed Naguib Rashad" },
-  { name:"Khaled Hesham Ahmed NourEldin",                 title:"HR Assistant",                                         manager:"Hossam Mohamed Naguib Rashad" },
-  { name:"Salma Mohamed Hassan Hussien Abdallah",         title:"HR Intern",                                            manager:"Hossam Mohamed Naguib Rashad" },
-  { name:"Nour Reda Abdalbdee Mohamed Hassan",            title:"HR Intern",                                            manager:"Hossam Mohamed Naguib Rashad" },
-  // Admin
-  { name:"Malak Khair Saeed Botros",                      title:"Admin",                                                manager:"Hani Youssef Siddiq Mina Mikhail" },
-  { name:"Nagi Mohamed Desoki El Sayed",                  title:"Admin",                                                manager:"Hani Youssef Siddiq Mina Mikhail" },
-  { name:"Fadi Victor Louis Marcos Surial",               title:"Admin",                                                manager:"Hani Youssef Siddiq Mina Mikhail" },
-  { name:"Ahmed AbdelGaber Mahmoud Mohamed",              title:"Office Boy",                                           manager:"Hani Youssef Siddiq Mina Mikhail" },
-  { name:"Mohamoud Mohamed Abdelaal Ismaiel",             title:"Office Boy",                                           manager:"Hani Youssef Siddiq Mina Mikhail" },
-  // IT Branch
-  { name:"Peter Saad Kamel Saeed",                        title:"Deputy IT Manager",                                    manager:"Mouhab Yacoub" },
-  { name:"Peter Magdy Khalil Ayaad",                      title:"IT Specialist",                                        manager:"Peter Saad Kamel Saeed" },
-  { name:"Youssef Ayman Mohamed Abdel Maqsoud",           title:"IT Specialist",                                        manager:"Peter Saad Kamel Saeed" },
-  { name:"Hussein Samy Hassan Saied",                     title:"IT Specialist",                                        manager:"Peter Saad Kamel Saeed" },
-  { name:"Saher Hany Lotfy Bolis",                        title:"IT HelpDesk",                                          manager:"Peter Saad Kamel Saeed" },
-  { name:"Kirolose Ayman Fathi Sidhom",                   title:"Junior IT Help Desk",                                  manager:"Peter Saad Kamel Saeed" },
-  { name:"Youssef Ragai Shaker Stephanos",                title:"IT Intern",                                            manager:"Peter Saad Kamel Saeed" },
-  { name:"Matthew Tarek Louqa Shaker Basilius",           title:"IT Intern",                                            manager:"Peter Saad Kamel Saeed" },
-  // Quality Branch
-  { name:"Ahmed Mohamed ElHussein Abdellatif",            title:"Quality Assurance Officer",                            manager:"Marco Ashraf Anwar Zaki" },
-  { name:"Amr Samir Sayed Mohamed Abdelaal",              title:"DTL Quality Assurance",                                manager:"Marco Ashraf Anwar Zaki" },
-  { name:"Nouran Mohamed Saeed Gad",                      title:"DTL Quality Assurance",                                manager:"Marco Ashraf Anwar Zaki" },
-  { name:"Rahma Khaled Mohamed Emam",                     title:"Quality Assurance Officer",                            manager:"Marco Ashraf Anwar Zaki" },
-  { name:"Rafaa Adel Abdullah El Nour",                   title:"Quality Assurance Officer",                            manager:"Marco Ashraf Anwar Zaki" },
-  { name:"Rawan Yasser Hassan Abd El Aziz Attia",         title:"Quality Assurance Officer",                            manager:"Marco Ashraf Anwar Zaki" },
-  { name:"Zeina Hassan Mahmoud Hassan Farghaly",          title:"Quality Assurance Officer",                            manager:"Marco Ashraf Anwar Zaki" },
-  { name:"Martina Sabry Mofaddal Al-Sagheer",             title:"Quality Assurance Officer",                            manager:"Marco Ashraf Anwar Zaki" },
-  { name:"Ragiah Mahmoud Abdelmgeid Fouad",               title:"Quality Assurance Officer",                            manager:"Marco Ashraf Anwar Zaki" },
-  { name:"Nada Wael Shabaan Tawfik Mohamed",              title:"Quality Assurance Officer",                            manager:"Marco Ashraf Anwar Zaki" },
-  // Marketing Branch
-  { name:"Sara Girgis Aziz Girgis",                       title:"Graphic Designer",                                     manager:"Aya Mosaad Abd El Aziz Abd El Ghany" },
-  { name:"Yasmine Alaa Gerada",                           title:"Marketing Specialist",                                 manager:"Aya Mosaad Abd El Aziz Abd El Ghany" },
-  // WFM Branch
-  { name:"Diaa Youssef Sediq Soliman",                    title:"RTM & Data Analytics Supervisor",                      manager:"AbdelZaher Aamer AbdelZaher Saad" },
-  { name:"XxX",                                           title:"WFM Coordinator",                                      manager:"AbdelZaher Aamer AbdelZaher Saad" }, 
-  { name:"Mohamed Ashraf Ezzat Bayoumi",                  title:"Senior RTM & Data Analyst",                            manager:"Diaa Youssef Sediq Soliman" },
-  { name:"Abdallah Mahmoud Ali Ibrahim Elsharaawy",       title:"Senior RTM & Data Analyst",                            manager:"Diaa Youssef Sediq Soliman" },
-  { name:"Kirollus Youssef Nagah Abdallah",               title:"Operational Data Analyst",                             manager:"Diaa Youssef Sediq Soliman" },
-  { name:"Abdelrahman Aamer AbdelZaher Saad",             title:"Operational Data Analyst",                             manager:"Diaa Youssef Sediq Soliman" },
-  { name:"Mohamed Said Abdelmoneim Ahmed",                title:"Operational Data Analyst",                             manager:"Diaa Youssef Sediq Soliman" },
-  // Operations Branch
-  { name:"Omar Khaled Elsayed Mohamed Elaghoury",         title:"SR. Operation Manager",                                manager:"Mahmoud Shawki Mahmoud Abdelghafar Elbeny" },
-  { name:"Omar Khaled Mohamed Abdelmoniem El Masry",      title:"Operation Manager",                                    manager:"Mahmoud Shawki Mahmoud Abdelghafar Elbeny" },
-  { name:"Tariq Mahmoud Mohammed Sanad",                  title:"Operation Manager",                                    manager:"Mahmoud Shawki Mahmoud Abdelghafar Elbeny" },
-  // Under Elaghoury
-  { name:"Abdelrahman Mostafa El Mohamady Mostafa",       title:"Team Leader",                                          manager:"Omar Khaled Elsayed Mohamed Elaghoury" },
-  { name:"Mahmoud Hemdan AbdelMawla Ali",                 title:"Team Leader",                                          manager:"Omar Khaled Elsayed Mohamed Elaghoury" },
-  { name:"Mahmoud Mohamed Ramadan Mohamed",               title:"Team Leader",                                          manager:"Omar Khaled Elsayed Mohamed Elaghoury" },
-  { name:"Ahmed Khaled Sayed Ahmed Ahmed Elkilany",       title:"Team Leader",                                          manager:"Omar Khaled Elsayed Mohamed Elaghoury" },
-  // Under Abdelrahman Mostafa
-  { name:"Yasmeen Mostafa Abdelhamiid Mohamed",           title:"Delegate TL",                                          manager:"Abdelrahman Mostafa El Mohamady Mostafa" },
-  { name:"Bassem Nasser Saeed Ali",                       title:"Delegate TL",                                          manager:"Abdelrahman Mostafa El Mohamady Mostafa" },
-  { name:"Mohamed HossamEldin Awad Elzoghbi",             title:"Delegate TL",                                          manager:"Abdelrahman Mostafa El Mohamady Mostafa" },
-  { name:"Mennatalla Mohamed Sayed Ahmed Mahmoud",        title:"SME",                                                  manager:"Abdelrahman Mostafa El Mohamady Mostafa" },
-  { name:"Hani Mahmoud Hussien Mahdy",                    title:"SME",                                                  manager:"Abdelrahman Mostafa El Mohamady Mostafa" },
-  // Under Mahmoud Hemdan
-  { name:"Mohamed Marrouf AbdelWahed AbdelWahab",         title:"Delegate TL",                                          manager:"Mahmoud Hemdan AbdelMawla Ali" },
-  { name:"Omar Mohamed Abdelghany Abdelaziz",             title:"Delegate TL",                                          manager:"Mahmoud Hemdan AbdelMawla Ali" },
-  { name:"Marina Aniis Rasmy Rizkallah",                  title:"Delegate TL",                                          manager:"Mahmoud Hemdan AbdelMawla Ali" },
-  { name:"Youssef Hassan Ahmed Hassan Draz",              title:"SME",                                                  manager:"Mahmoud Hemdan AbdelMawla Ali" },
-  { name:"Ahmed Samir Mohamed Shehata",                   title:"SME",                                                  manager:"Mahmoud Hemdan AbdelMawla Ali" },
-  { name:"Ihab Ali Ahmed Ibrahim Elsayed",                title:"SME",                                                  manager:"Mahmoud Hemdan AbdelMawla Ali" },
-  { name:"Mina George Anwar Alqoms Hana",                 title:"SME",                                                  manager:"Mahmoud Hemdan AbdelMawla Ali" },
-  // Under Mahmoud Ramadan
-  { name:"Aya Emad Mohamed Ashmawy",                      title:"Delegate TL",                                          manager:"Mahmoud Mohamed Ramadan Mohamed" },
-  { name:"Zeina Khaled Ali AbdelHalim",                   title:"Delegate TL",                                          manager:"Mahmoud Mohamed Ramadan Mohamed" },
-  { name:"Ahmed Ehab Ahmed Abd El Hafeez",                title:"Delegate TL",                                          manager:"Mahmoud Mohamed Ramadan Mohamed" },
-  { name:"Fady Emad Fayek Girgis",                        title:"Delegate TL",                                          manager:"Mahmoud Mohamed Ramadan Mohamed" },
-  { name:"Nesma Mohamed Elsayed Ahmed Amin",              title:"Delegate TL",                                          manager:"Mahmoud Mohamed Ramadan Mohamed" },
-  // Under Elkilany
-  { name:"Ahmed Mostafa Zahger Ali",                      title:"Delegate TL",                                          manager:"Ahmed Khaled Sayed Ahmed Ahmed Elkilany" },
-  { name:"Ahmed Ayman Mohamed Soliman Faramawy",          title:"Delegate TL",                                          manager:"Ahmed Khaled Sayed Ahmed Ahmed Elkilany" },
-  { name:"Mariam Khaled Mohamed Mahmoud Aboud",           title:"SME",                                                  manager:"Ahmed Khaled Sayed Ahmed Ahmed Elkilany" },
-  // Under Yara
-  { name:"Bavly Abd El Maseeh Toma Youssef",             title:"Delegate TL",                                          manager:"Yara Mohsen Hassan Ewis" },
-  // Under El Masry
-  { name:"Yahia Ahmed Farouk Mahmoud",                    title:"Senior Team Leader",                                   manager:"Omar Khaled Mohamed Abdelmoniem El Masry" },
-  { name:"Mariam Mahmoud Hassan Mohamed Hassanein",       title:"Senior Team Leader",                                   manager:"Omar Khaled Mohamed Abdelmoniem El Masry" },
-  // Under Yahia
-  { name:"Amr Rabei Hassan Ibrahim Etman",                title:"Team Leader",                                          manager:"Yahia Ahmed Farouk Mahmoud" },
-  { name:"Ahmed Sameh Ahmed Amin",                        title:"Team Leader",                                          manager:"Yahia Ahmed Farouk Mahmoud" },
-  { name:"Madonna Hazem Bassily Dous",                    title:"Delegate TL",                                          manager:"Yahia Ahmed Farouk Mahmoud" },
-  { name:"Mohamed Ibrahim Mohamed Mahmoud",               title:"Team Leader",                                          manager:"Yahia Ahmed Farouk Mahmoud" },
-  { name:"Mariam Ehab Zenhom Mahmoud",                    title:"Delegate TL",                                          manager:"Yahia Ahmed Farouk Mahmoud" },
-  { name:"Malak Nabil Nayef ElSafady",                    title:"Delegate TL",                                          manager:"Yahia Ahmed Farouk Mahmoud" },
-  { name:"Omar Mostafa Sobh ElKhodary Mostafa",           title:"Team Leader",                                          manager:"Yahia Ahmed Farouk Mahmoud" },
-  { name:"Alaa Mahmoud Mohamed Ahmed",                    title:"Team Leader",                                          manager:"Yahia Ahmed Farouk Mahmoud" },
-  // Under Alaa
-  { name:"Al Qasim Salah El Deen Mohamed Shabana",        title:"Delegate TL",                                          manager:"Alaa Mahmoud Mohamed Ahmed" },
-  // Under Omar Sobh
-  { name:"Youssef Mohammed Sharaf Abu Eid",               title:"Delegate TL",                                          manager:"Omar Mostafa Sobh ElKhodary Mostafa" },
-  // Under Mariam Hassanein
-  { name:"Abdelhameed Mohamed Abdelhamed Mohmed",         title:"Team Leader",                                          manager:"Mariam Mahmoud Hassan Mohamed Hassanein" },
-  { name:"Laila Yasser Sayed AbdelGhafar",                title:"Team Leader",                                          manager:"Mariam Mahmoud Hassan Mohamed Hassanein" },
-  { name:"Layla Adel AbdelGawad Hashem",                  title:"Team Leader",                                          manager:"Mariam Mahmoud Hassan Mohamed Hassanein" },
-  // Under Abdelhameed
-  { name:"Mazin Mostafa Abdelzaher Shabib",               title:"Delegate TL",                                          manager:"Abdelhameed Mohamed Abdelhamed Mohmed" },
-  { name:"Mustafa Ahmed El Sayed Mohamed Darwish",        title:"Delegate TL",                                          manager:"Abdelhameed Mohamed Abdelhamed Mohmed" },
-  // Under Laila
-  { name:"Eman El Siddig Al Tayeb Abu El Gasim",          title:"Delegate TL",                                          manager:"Laila Yasser Sayed AbdelGhafar" },
-  { name:"Michael Asaad Maurice Asaad",                   title:"Delegate TL",                                          manager:"Laila Yasser Sayed AbdelGhafar" },
-  // Under Layla
-  { name:"NourEldin Wael Ahmed Maher Assal",              title:"Delegate TL",                                          manager:"Layla Adel AbdelGawad Hashem" },
-  { name:"Sara Mohamed Abdel Latif Mohamed Awadallah",    title:"Delegate TL",                                          manager:"Layla Adel AbdelGawad Hashem" },
-  { name:"Omar Yasser Kamal Nazir Mohamed Kamel",         title:"SME",                                                  manager:"Layla Adel AbdelGawad Hashem" },
-  // Under Tariq Sanad
-  { name:"AbdelRahman Mostafa Labib Motawaa",             title:"Account Manager",                                      manager:"Tariq Mahmoud Mohammed Sanad" },
-  { name:"Tasneem Mostafa ElHadi Salih",                  title:"Team Leader",                                          manager:"Tariq Mahmoud Mohammed Sanad" },
-  { name:"Ayad Essam Gharib Rawy",                        title:"Team Leader",                                          manager:"Tariq Mahmoud Mohammed Sanad" },
-  { name:"Yara Mohsen Hassan Ewis",                       title:"Team Leader",                                          manager:"Tariq Mahmoud Mohammed Sanad" },
+// ── Load Org Data From Google Sheets ──
 
-  // Under AbdelRahman Motawaa
-  { name:"Omar Asem Sayed Shehata",                       title:"Team Leader",                                          manager:"AbdelRahman Mostafa Labib Motawaa" },
-  { name:"Mahmoud Hussien Ragaa Amin",                    title:"Team Leader",                                          manager:"AbdelRahman Mostafa Labib Motawaa" },
-  // Under Tasneem
-  { name:"Maha Assem Ali El Moghazy AbdelHamid",          title:"Delegate TL",                                          manager:"Tasneem Mostafa ElHadi Salih" },
-  { name:"Jana Mahrous Mahmoud Mahrous",                  title:"Delegate TL",                                          manager:"Tasneem Mostafa ElHadi Salih" },
-  { name:"Marly Emad Refaat Nasry",                       title:"Delegate TL",                                          manager:"Tasneem Mostafa ElHadi Salih" },
-  { name:"Eslam Safwat Talaat Abd-Elfatah",               title:"SME",                                                  manager:"Tasneem Mostafa ElHadi Salih" },
-  // Under Mahmoud Hussien
-  { name:"Kareem Mohamed Fawzy Sultan",                   title:"SME",                                                  manager:"Mahmoud Hussien Ragaa Amin" },
-  { name:"Mina Atef Benyameen Serkees",                   title:"Delegate TL",                                          manager:"Mahmoud Hussien Ragaa Amin" },
-  { name:"Mohamed Ibrahim Mahmoud Abd Elaal Nofal",       title:"SME",                                                  manager:"Mahmoud Hussien Ragaa Amin" },
-  { name:"Rodaina Ashraf Abdelsatar Abdelaziz",           title:"SME",                                                  manager:"Mahmoud Hussien Ragaa Amin" },
-  { name:"Mohamed Hossam Eldin Hussien Fahmy",            title:"SME",                                                  manager:"Mahmoud Hussien Ragaa Amin" },
-  // Under Omar Shehata
-  { name:"Raheem Abdelmaksoud El Sayed Shanab",           title:"SME",                                                  manager:"Omar Asem Sayed Shehata" },
-  { name:"Omar Abobakr Fekry Korany",                     title:"SME",                                                  manager:"Omar Asem Sayed Shehata" },
-  { name:"Kirrolos Safwat Naguib Wahba",                  title:"SME",                                                  manager:"Omar Asem Sayed Shehata" },
-  { name:"Mohamed Tarek Mohamed Lotfy Mohamed Ibrahim Harraz", title:"SME",                                             manager:"Omar Asem Sayed Shehata" },
-  { name:"Omar Asem Sayed Shehata_TL2",                   title:"Team Leader",                                          manager:"AbdelRahman Mostafa Labib Motawaa" },
-];
+let people = [];
+let byName = {};
+let roots = [];
 
-// ── Build tree ──
-const byName = {};
-people.forEach(p => { byName[p.name] = { ...p, children: [] }; });
-const roots = [];
-people.forEach(p => {
-  const node = byName[p.name];
-  if (!p.manager || !byName[p.manager]) {
-    roots.push(node);
-  } else {
-    byName[p.manager].children.push(node);
+async function loadPeople() {
+
+  const SHEET_ID = '1kO9rERWJgxg-OXUn8vOsnx2UydEWWU6P88J23Yhuqi4';
+  const SHEET_NAME = 'Sheet1';
+
+  const url =
+    `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
+
+  try {
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    people = data.map(row => ({
+      name: (row.Name || '').trim(),
+      title: (row.Title || '').trim(),
+      manager:
+        row['Direct manager'] &&
+        row['Direct manager'] !== '-'
+          ? row['Direct manager'].trim()
+          : null
+    }));
+
+    buildTree();
+
+  } catch (err) {
+    console.error('Failed loading Google Sheet:', err);
   }
-});
+}
+
+function buildTree() {
+
+  byName = {};
+  roots = [];
+
+  people.forEach(p => {
+    byName[p.name] = {
+      ...p,
+      children: []
+    };
+  });
+
+  people.forEach(p => {
+
+    const node = byName[p.name];
+
+    if (!p.manager || !byName[p.manager]) {
+
+      roots.push(node);
+
+    } else {
+
+      byName[p.manager].children.push(node);
+
+    }
+  });
+
+  allNodes.length = 0;
+
+  canvas.innerHTML = '';
+
+  if (roots.length > 0) {
+
+    canvas.appendChild(
+      buildNode(roots[0], 0)
+    );
+
+  }
+
+  canvas.style.transform = 'scale(0.8)';
+
+  collapseAll();
+}
 
 const COLORS = ['#0d3b6e','#1565c0','#00acc1','#42a5f5','#7ec8e3','#90caf9'];
 function levelColor(lvl) { return COLORS[Math.min(lvl, COLORS.length - 1)]; }
@@ -668,9 +568,7 @@ document.getElementById('search').addEventListener('input', function() {
 });
 
 // ── Render ──
-canvas.appendChild(buildNode(roots[0], 0));
-canvas.style.transform = 'scale(0.8)';
-collapseAll();
+loadPeople();
 </script>
 </body>
 </html>
