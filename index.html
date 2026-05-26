@@ -804,11 +804,22 @@
     });
   }
 
-  function collapseAll() {
+ function collapseAll() {
 
-    allNodes.forEach(n => {
+  allNodes.forEach(n => {
 
-      if (n._childrenWrap && n.manager) {
+    if (n._childrenWrap) {
+
+      // Keep CEO direct reports expanded
+      if (!n.manager) {
+
+        n._childrenWrap.style.display = '';
+
+        n._btn.textContent = '−';
+
+        collapsed.delete(n.name);
+
+      } else {
 
         collapsed.add(n.name);
 
@@ -816,8 +827,9 @@
 
         n._btn.textContent = '+';
       }
-    });
-  }
+    }
+  });
+}
 
   function revealAncestors(node) {
 
