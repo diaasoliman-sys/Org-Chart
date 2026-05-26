@@ -316,14 +316,19 @@ async function loadPeople() {
     const data = await response.json();
 
     people = data.map(row => ({
-      name: (row.Name || '').trim(),
-      title: (row.Title || '').trim(),
-      manager:
-        row['Direct manager'] &&
-        row['Direct manager'] !== '-'
-          ? row['Direct manager'].trim()
-          : null
-    }));
+  name: (row.Name || '').trim(),
+
+  title: (row.Title || '').trim(),
+
+  manager:
+    row['Direct manager'] &&
+    row['Direct manager'].trim() !== '-' &&
+    row['Direct manager'].trim() !== ''
+      ? row['Direct manager'].trim()
+      : null,
+
+  level: Number(row['Hierarchy Level'] || 0)
+}));
 
     buildTree();
 
@@ -366,7 +371,7 @@ function buildTree() {
   if (roots.length > 0) {
 
     canvas.appendChild(
-      buildNode(roots[0], 0)
+      buildNode(roots[0])
     );
 
   }
@@ -393,22 +398,22 @@ function badgeLabel(lvl) {
 const collapsed = new Set();
 const allNodes = [];
 
-function buildNode(node, level) {
+function buildNode(node) {
   allNodes.push(node);
   const wrap = document.createElement('div');
-  wrap.className = `node lvl-${Math.min(level, 5)}`;
+  wrap.className = `node lvl-$Math.min(node.level, 5)}`;
   wrap.dataset.name = node.name.replace(/_TL\d+$/,'').toLowerCase();
   wrap.dataset.title = node.title.toLowerCase();
 
   const card = document.createElement('div');
   card.className = 'card';
   card.innerHTML = `
-    <div class="card-avatar" style="background:linear-gradient(135deg,${levelColor(level)},${levelColor(level+1)})">
+    <div class="card-avatar" style="background:linear-gradient(135deg,${levelColor(level+1)},${levelColor(level+1)})">
       ${initials(node.name)}
     </div>
     <div class="card-name">${shortName(node.name)}</div>
     <div class="card-title">${node.title}</div>
-    <div class="card-badge">${badgeLabel(level)}</div>
+    <div class="card-badge">${badgeLabel(node.level)}</div>
   `;
   wrap.appendChild(card);
 
@@ -439,7 +444,7 @@ function buildNode(node, level) {
       const vl = document.createElement('div');
       vl.className = 'v-line';
       col.appendChild(vl);
-      col.appendChild(buildNode(child, level + 1));
+      col.appendChild(buildNode(child));
       row.appendChild(col);
     });
 
