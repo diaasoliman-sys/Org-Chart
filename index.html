@@ -4,8 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Org Chart</title>
+
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -52,8 +57,14 @@
       background: rgba(255,255,255,0.15);
       color: #fff;
     }
-    #search::placeholder { color: rgba(255,255,255,0.6); }
-    #search:focus { background: rgba(255,255,255,0.25); }
+
+    #search::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+
+    #search:focus {
+      background: rgba(255,255,255,0.25);
+    }
 
     .toolbar-btn {
       padding: 6px 14px;
@@ -65,7 +76,10 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-    .toolbar-btn:hover { background: rgba(255,255,255,0.15); }
+
+    .toolbar-btn:hover {
+      background: rgba(255,255,255,0.15);
+    }
 
     .zoom-group {
       display: flex;
@@ -94,9 +108,22 @@
       gap: 8px;
       flex-shrink: 0;
     }
-    #status-bar.visible        { display: flex; background: #fff3cd; color: #856404; }
-    #status-bar.visible.error  { background: #f8d7da; color: #721c24; }
-    #status-bar.visible.success{ background: #d1e7dd; color: #0a3622; }
+
+    #status-bar.visible {
+      display: flex;
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    #status-bar.visible.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    #status-bar.visible.success {
+      background: #d1e7dd;
+      color: #0a3622;
+    }
 
     #canvas-wrap {
       flex: 1;
@@ -113,46 +140,84 @@
       transition: transform 0.2s;
       width: max-content;
       min-width: 100%;
+      padding-bottom: 100px;
     }
 
     .node {
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative;
     }
+
+    /* =========================
+       NEW BRACKET CONNECTORS
+    ========================== */
 
     .children-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative;
+      padding-top: 24px;
     }
 
     .children-row {
       display: flex;
-      flex-direction: row;
+      justify-content: center;
       align-items: flex-start;
+      position: relative;
     }
 
     .child-col {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
+      padding: 0 10px;
     }
 
-    .v-line {
+    /* Vertical line from parent */
+    .children-wrap::before {
+      content: '';
+      position: absolute;
+      top: 0;
       width: 2px;
       height: 24px;
       background: #b0c4de;
-      flex-shrink: 0;
     }
 
-    .children-row .child-col > .v-line { height: 20px; }
+    /* Horizontal sibling line */
+    .children-row::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 30px;
+      right: 30px;
+      height: 2px;
+      background: #b0c4de;
+    }
+
+    /* Vertical connector to each child */
+    .child-col::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 2px;
+      height: 20px;
+      background: #b0c4de;
+    }
+
+    /* Remove horizontal line if only 1 child */
+    .children-row:has(.child-col:only-child)::before {
+      display: none;
+    }
 
     .card {
       position: relative;
       width: 160px;
       border-radius: 12px;
-      padding: 14px 12px 10px;
+      padding: 14px 12px 12px;
       background: #fff;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       text-align: center;
@@ -161,7 +226,11 @@
       border-top: 4px solid #ccc;
       margin: 0 6px;
     }
-    .card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.15); transform: translateY(-2px); }
+
+    .card:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
 
     .lvl-0 .card { border-top-color: #0d3b6e; }
     .lvl-1 .card { border-top-color: #1565c0; }
@@ -183,12 +252,25 @@
       margin: 0 auto 8px;
     }
 
-    .card-name  { font-size: 13px; font-weight: 700; color: #1a2540; line-height: 1.3; margin-bottom: 4px; word-break: break-word; }
-    .card-title { font-size: 11px; color: #5a6a85; line-height: 1.3; margin-bottom: 6px; word-break: break-word; }
-    .card-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: #eef2ff; color: #3549a0; }
+    .card-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a2540;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+
+    .card-title {
+      font-size: 11px;
+      color: #5a6a85;
+      line-height: 1.3;
+      word-break: break-word;
+    }
 
     .card.highlight {
-      box-shadow: 0 0 0 3px #f59e0b, 0 6px 20px rgba(245,158,11,0.3);
+      box-shadow: 0 0 0 3px #f59e0b,
+                  0 6px 20px rgba(245,158,11,0.3);
       transform: translateY(-2px);
     }
 
@@ -211,7 +293,10 @@
       transition: background 0.2s;
       user-select: none;
     }
-    .collapse-btn:hover { background: #0d3b6e; }
+
+    .collapse-btn:hover {
+      background: #0d3b6e;
+    }
 
     #loading {
       position: fixed;
@@ -224,20 +309,32 @@
       gap: 16px;
       z-index: 100;
     }
-    #loading.hidden { display: none; }
+
+    #loading.hidden {
+      display: none;
+    }
 
     .spinner {
-      width: 48px; height: 48px;
+      width: 48px;
+      height: 48px;
       border: 5px solid #b0c4de;
       border-top-color: #1565c0;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .loading-text { font-size: 15px; color: #1a2540; font-weight: 600; }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 15px;
+      color: #1a2540;
+      font-weight: 600;
+    }
   </style>
 </head>
+
 <body>
 
   <div id="loading">
@@ -246,14 +343,31 @@
   </div>
 
   <div id="toolbar">
-    <img id="logo-img" src="logo.jpg.png" alt="Logo" onerror="this.style.display='none'" />
+    <img id="logo-img" src="logo.jpg.png" alt="Logo"
+         onerror="this.style.display='none'" />
+
     <span class="toolbar-title">Organization Chart</span>
-    <input type="text" id="search" placeholder="Search name or title…" />
-    <button class="toolbar-btn" onclick="expandAll()">Expand All</button>
-    <button class="toolbar-btn" onclick="collapseAll()">Collapse All</button>
+
+    <input type="text" id="search"
+           placeholder="Search name or title…" />
+
+    <button class="toolbar-btn" onclick="expandAll()">
+      Expand All
+    </button>
+
+    <button class="toolbar-btn" onclick="collapseAll()">
+      Collapse All
+    </button>
+
     <div class="zoom-group">
       <span>Zoom</span>
-      <input type="range" id="zoom-slider" min="10" max="150" value="80" />
+
+      <input type="range"
+             id="zoom-slider"
+             min="10"
+             max="150"
+             value="80" />
+
       <span id="zoom-label">80%</span>
     </div>
   </div>
@@ -265,11 +379,12 @@
   </div>
 
 <script>
-  // ── GLOBALS ──
+
   let people  = [];
   let byName  = {};
   let byNorm  = {};
   let roots   = [];
+
   const collapsed = new Set();
   const allNodes  = [];
 
@@ -279,15 +394,19 @@
   const statusBar = document.getElementById('status-bar');
   const loadingEl = document.getElementById('loading');
 
-  // ── STATUS ──
   function showStatus(msg, type='info') {
     statusBar.textContent = msg;
     statusBar.className   = 'visible ' + type;
   }
-  function hideStatus() { statusBar.className = ''; }
-  function hideLoading() { loadingEl.classList.add('hidden'); }
 
-  // ── NORMALIZE names: lowercase, collapse whitespace, strip invisible chars ──
+  function hideStatus() {
+    statusBar.className = '';
+  }
+
+  function hideLoading() {
+    loadingEl.classList.add('hidden');
+  }
+
   function norm(str) {
     return (str || '')
       .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, ' ')
@@ -301,333 +420,548 @@
     return byName[name] || byNorm[norm(name)] || null;
   }
 
-  // ── LOAD SHEET ──
   async function loadPeople() {
+
     const SHEET_ID = '1kO9rERWJgxg-OXUn8vOsnx2UydEWWU6P88J23Yhuqi4';
     const GID      = '0';
-    const CSV_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+
+    const CSV_URL =
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
     try {
+
       showStatus('Loading org chart data…', 'info');
+
       const response = await fetch(CSV_URL);
-      if (!response.ok) throw new Error(`HTTP ${response.status}. Make sure the sheet is shared as "Anyone with the link can view".`);
+
+      if (!response.ok) {
+        throw new Error(
+          `HTTP ${response.status}. Make sure the sheet is shared publicly.`
+        );
+      }
 
       const csvText = await response.text();
-      if (!csvText || csvText.trim().length === 0) throw new Error('Sheet returned empty data.');
 
       const rows = parseCSV(csvText);
-      if (rows.length < 2) throw new Error('Sheet has no data rows.');
 
-      const headers    = rows[0].map(h => h.trim());
-      const nameIdx    = headers.findIndex(h => h.toLowerCase() === 'name');
-      const titleIdx   = headers.findIndex(h => h.toLowerCase() === 'title');
-      const managerIdx = headers.findIndex(h => h.toLowerCase() === 'direct manager');
-      const levelIdx   = headers.findIndex(h => h.toLowerCase() === 'hierarchy level');
+      const headers = rows[0].map(h => h.trim());
 
-      if (nameIdx === -1) throw new Error('Could not find a "Name" column.');
+      const nameIdx =
+        headers.findIndex(h => h.toLowerCase() === 'name');
+
+      const titleIdx =
+        headers.findIndex(h => h.toLowerCase() === 'title');
+
+      const managerIdx =
+        headers.findIndex(h => h.toLowerCase() === 'direct manager');
+
+      const levelIdx =
+        headers.findIndex(h => h.toLowerCase() === 'hierarchy level');
 
       people = rows.slice(1)
-        .filter(row => row[nameIdx] && row[nameIdx].trim() !== '')
-        .map(row => {
-          const mgr = managerIdx !== -1 ? (row[managerIdx] || '').trim() : '';
-          return {
-            name:    row[nameIdx].trim(),
-            title:   titleIdx   !== -1 ? (row[titleIdx]   || '').trim() : '',
-            manager: mgr !== '' && mgr !== '-' ? mgr : null,
-            level:   levelIdx   !== -1 && row[levelIdx] && row[levelIdx].trim() !== ''
-                       ? Number(row[levelIdx]) : 5
-          };
-        });
+        .filter(r => r[nameIdx] && r[nameIdx].trim() !== '')
+        .map(r => ({
+          name: r[nameIdx].trim(),
 
-      if (people.length === 0) throw new Error('No valid rows found.');
+          title:
+            titleIdx !== -1
+              ? (r[titleIdx] || '').trim()
+              : '',
 
-      hideStatus();
+          manager:
+            managerIdx !== -1
+              ? ((r[managerIdx] || '').trim() || null)
+              : null,
+
+          level:
+            levelIdx !== -1
+              ? Number(r[levelIdx] || 5)
+              : 5
+        }));
+
       buildTree();
+
+      hideLoading();
+      hideStatus();
+
+    } catch(err) {
+
+      console.error(err);
+
       hideLoading();
 
-    } catch (err) {
-      hideLoading();
-      showStatus('⚠ ' + err.message, 'error');
-      console.error(err);
+      showStatus(err.message, 'error');
     }
   }
 
-  // ── CSV PARSER ──
   function parseCSV(text) {
+
     const rows  = [];
-    const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+
+    const lines = text
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .split('\n');
+
     for (const line of lines) {
-      if (line.trim() === '') continue;
+
+      if (!line.trim()) continue;
+
       const cells = [];
-      let cur = '', inQ = false;
+
+      let cur = '';
+      let inQ = false;
+
       for (let i = 0; i < line.length; i++) {
+
         const ch = line[i];
+
         if (ch === '"') {
-          if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-          else inQ = !inQ;
-        } else if (ch === ',' && !inQ) { cells.push(cur); cur = ''; }
-        else cur += ch;
+
+          if (inQ && line[i+1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQ = !inQ;
+          }
+
+        } else if (ch === ',' && !inQ) {
+
+          cells.push(cur);
+          cur = '';
+
+        } else {
+
+          cur += ch;
+        }
       }
+
       cells.push(cur);
+
       rows.push(cells);
     }
+
     return rows;
   }
 
-  // ── BUILD TREE ──
   function buildTree() {
+
     byName = {};
     byNorm = {};
     roots  = [];
+
     collapsed.clear();
+
     allNodes.length = 0;
 
-    // Index every person by exact name AND normalized name
     people.forEach(person => {
-      const node = { ...person, children: [] };
+
+      const node = {
+        ...person,
+        children: []
+      };
+
       byName[person.name]       = node;
       byNorm[norm(person.name)] = node;
     });
 
-    // Attach children; fall back to normalized lookup if exact fails
-    const unmatched = [];
     people.forEach(person => {
+
       const node = byName[person.name];
+
       if (!person.manager) {
+
         roots.push(node);
-        return;
-      }
-      const mgr = findNode(person.manager);
-      if (mgr) {
-        mgr.children.push(node);
+
       } else {
-        roots.push(node); // orphan → show at top
-        unmatched.push(`"${person.name}" → manager: "${person.manager}"`);
+
+        const mgr = findNode(person.manager);
+
+        if (mgr) {
+          mgr.children.push(node);
+        } else {
+          roots.push(node);
+        }
       }
     });
 
     canvas.innerHTML = '';
 
-    if (roots.length === 0) {
-      showStatus('No root nodes found.', 'error');
-      return;
-    }
-
-    // Warn about genuinely unmatched managers
-    if (unmatched.length > 0) {
-      showStatus(
-        `⚠ ${unmatched.length} employee(s) have unmatched manager names in the sheet (showing at top level): ` +
-        unmatched.join(' | '),
-        'info'
-      );
-    }
-
-    roots.forEach(root => canvas.appendChild(buildNode(root)));
+    roots.forEach(root => {
+      canvas.appendChild(buildNode(root));
+    });
 
     collapseAll();
 
-    // Auto-fit: wait for DOM paint after collapse before measuring
     setTimeout(() => {
-      const wrap   = document.getElementById('canvas-wrap');
-      const availW = wrap.clientWidth  - 60;
+
+      const wrap = document.getElementById('canvas-wrap');
+
+      const availW = wrap.clientWidth - 60;
       const availH = wrap.clientHeight - 60;
 
-      // Temporarily reveal at full scale to measure
-      canvas.style.transition = 'none';
-      canvas.style.transform  = 'scale(1)';
+      canvas.style.transform = 'scale(1)';
 
       requestAnimationFrame(() => {
+
         const canvasW = canvas.scrollWidth;
         const canvasH = canvas.scrollHeight;
 
-        const fitZoom = Math.min(availW / canvasW, availH / canvasH, 1);
-        const pct     = Math.max(Math.round(fitZoom * 100), 10);
+        const fitZoom = Math.min(
+          availW / canvasW,
+          availH / canvasH,
+          1
+        );
 
-        canvas.style.transition = '';
+        const pct = Math.max(
+          Math.round(fitZoom * 100),
+          10
+        );
+
         applyZoom(pct);
       });
+
     }, 100);
   }
 
-  // ── COLORS ──
-  const COLORS = ['#0d3b6e','#1565c0','#00acc1','#42a5f5','#7ec8e3','#90caf9'];
-  function levelColor(l) { return COLORS[Math.min(l, 5)]; }
+  const COLORS = [
+    '#0d3b6e',
+    '#1565c0',
+    '#00acc1',
+    '#42a5f5',
+    '#7ec8e3',
+    '#90caf9'
+  ];
 
-  // ── HELPERS ──
+  function levelColor(l) {
+    return COLORS[Math.min(l, 5)];
+  }
+
   function initials(name) {
-    return (name||'').replace(/_TL\d+$/,'').split(' ').filter(Boolean)
-      .slice(0,2).map(w=>w[0].toUpperCase()).join('');
-  }
-  function shortName(name) {
-    const parts = (name||'').replace(/_TL\d+$/,'').split(' ').filter(Boolean);
-    if (parts.length <= 3) return parts.join(' ');
-    return parts[0]+' '+parts[1]+' '+parts[parts.length-1];
-  }
-  function badgeLabel(l) {
-    return ['Executive','Director','Manager','Senior','Team Leader','Staff'][Math.min(l,5)];
-  }
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+    return (name || '')
+      .replace(/_TL\d+$/, '')
+      .split(' ')
+      .filter(Boolean)
+      .slice(0,2)
+      .map(w => w[0].toUpperCase())
+      .join('');
   }
 
-  // ── BUILD NODE ──
+  function shortName(name) {
+
+    const parts = (name || '')
+      .replace(/_TL\d+$/, '')
+      .split(' ')
+      .filter(Boolean);
+
+    if (parts.length <= 3) {
+      return parts.join(' ');
+    }
+
+    return (
+      parts[0] + ' ' +
+      parts[1] + ' ' +
+      parts[parts.length - 1]
+    );
+  }
+
+  function escHtml(s) {
+
+    return String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
   function buildNode(node) {
+
     allNodes.push(node);
-    const level = !isNaN(node.level) ? Number(node.level) : 5;
+
+    const level =
+      !isNaN(node.level)
+        ? Number(node.level)
+        : 5;
 
     const wrap = document.createElement('div');
-    wrap.className     = `node lvl-${Math.min(level,5)}`;
-    wrap.dataset.name  = (node.name  || '').toLowerCase();
-    wrap.dataset.title = (node.title || '').toLowerCase();
+
+    wrap.className = `node lvl-${Math.min(level,5)}`;
+
+    wrap.dataset.name  =
+      (node.name || '').toLowerCase();
+
+    wrap.dataset.title =
+      (node.title || '').toLowerCase();
 
     const card = document.createElement('div');
+
     card.className = 'card';
+
     card.innerHTML = `
-      <div class="card-avatar" style="background:linear-gradient(135deg,${levelColor(level)},${levelColor(Math.min(level+1,5))})">
+      <div class="card-avatar"
+           style="background:linear-gradient(
+             135deg,
+             ${levelColor(level)},
+             ${levelColor(Math.min(level+1,5))}
+           )">
         ${initials(node.name)}
       </div>
-      <div class="card-name">${escHtml(shortName(node.name))}</div>
-      <div class="card-title">${escHtml(node.title||'')}</div>
-      <div class="card-badge">${badgeLabel(level)}</div>
+
+      <div class="card-name">
+        ${escHtml(shortName(node.name))}
+      </div>
+
+      <div class="card-title">
+        ${escHtml(node.title || '')}
+      </div>
     `;
+
     wrap.appendChild(card);
 
     if (node.children && node.children.length > 0) {
+
       const btn = document.createElement('div');
-      btn.className   = 'collapse-btn';
+
+      btn.className = 'collapse-btn';
       btn.textContent = '−';
-      btn.title       = 'Expand / Collapse';
+
       card.appendChild(btn);
 
       const childrenWrap = document.createElement('div');
       childrenWrap.className = 'children-wrap';
 
-      const vLine = document.createElement('div');
-      vLine.className = 'v-line';
-      childrenWrap.appendChild(vLine);
-
       const row = document.createElement('div');
       row.className = 'children-row';
 
       node.children.forEach(child => {
+
         const col = document.createElement('div');
+
         col.className = 'child-col';
-        const cl = document.createElement('div');
-        cl.className = 'v-line';
-        col.appendChild(cl);
+
         col.appendChild(buildNode(child));
+
         row.appendChild(col);
       });
 
       childrenWrap.appendChild(row);
+
       wrap.appendChild(childrenWrap);
 
       node._childrenWrap = childrenWrap;
-      node._btn          = btn;
+      node._btn = btn;
 
       btn.addEventListener('click', e => {
+
         e.stopPropagation();
-        toggleNode(node.name, childrenWrap, btn);
+
+        toggleNode(
+          node.name,
+          childrenWrap,
+          btn
+        );
       });
     }
 
     node._el = wrap;
+
     return wrap;
   }
 
-  // ── TOGGLE ──
   function toggleNode(name, wrap, btn) {
+
     if (collapsed.has(name)) {
+
       collapsed.delete(name);
+
       wrap.style.display = '';
-      btn.textContent    = '−';
+
+      btn.textContent = '−';
+
     } else {
+
       collapsed.add(name);
+
       wrap.style.display = 'none';
-      btn.textContent    = '+';
+
+      btn.textContent = '+';
     }
   }
 
-  // ── EXPAND / COLLAPSE ALL ──
   function expandAll() {
+
     collapsed.clear();
+
     allNodes.forEach(n => {
-      if (n._childrenWrap) { n._childrenWrap.style.display=''; n._btn.textContent='−'; }
-    });
-  }
-  function collapseAll() {
-    allNodes.forEach(n => {
-      if (n._childrenWrap && n.manager) {
-        collapsed.add(n.name);
-        n._childrenWrap.style.display = 'none';
-        n._btn.textContent            = '+';
+
+      if (n._childrenWrap) {
+
+        n._childrenWrap.style.display = '';
+
+        n._btn.textContent = '−';
       }
     });
   }
 
-  // ── SEARCH ──
-  function revealAncestors(node) {
-    let cur = node;
-    while (cur.manager) {
-      const mgr = findNode(cur.manager);
-      if (!mgr) break;
-      if (mgr._childrenWrap && collapsed.has(mgr.name)) {
-        collapsed.delete(mgr.name);
-        mgr._childrenWrap.style.display = '';
-        mgr._btn.textContent            = '−';
+  function collapseAll() {
+
+    allNodes.forEach(n => {
+
+      if (n._childrenWrap && n.manager) {
+
+        collapsed.add(n.name);
+
+        n._childrenWrap.style.display = 'none';
+
+        n._btn.textContent = '+';
       }
+    });
+  }
+
+  function revealAncestors(node) {
+
+    let cur = node;
+
+    while (cur.manager) {
+
+      const mgr = findNode(cur.manager);
+
+      if (!mgr) break;
+
+      if (
+        mgr._childrenWrap &&
+        collapsed.has(mgr.name)
+      ) {
+
+        collapsed.delete(mgr.name);
+
+        mgr._childrenWrap.style.display = '';
+
+        mgr._btn.textContent = '−';
+      }
+
       cur = mgr;
     }
   }
 
   function doSearch(query) {
+
     allNodes.forEach(n => {
-      if (n._el) n._el.querySelector('.card').classList.remove('highlight');
+
+      if (n._el) {
+        n._el.querySelector('.card')
+          .classList.remove('highlight');
+      }
     });
 
-    const term = query.toLowerCase().trim();
-    if (!term) { hideStatus(); return; }
+    const term =
+      query.toLowerCase().trim();
+
+    if (!term) {
+
+      hideStatus();
+
+      return;
+    }
 
     const found = allNodes.filter(n => {
-      const nm = n._el ? n._el.dataset.name  || '' : '';
-      const ti = n._el ? n._el.dataset.title || '' : '';
-      return nm.includes(term) || ti.includes(term);
+
+      const nm =
+        n._el
+          ? n._el.dataset.name || ''
+          : '';
+
+      const ti =
+        n._el
+          ? n._el.dataset.title || ''
+          : '';
+
+      return (
+        nm.includes(term) ||
+        ti.includes(term)
+      );
     });
 
-    if (found.length === 0) { showStatus(`No results for "${query}"`, 'info'); return; }
+    if (found.length === 0) {
+
+      showStatus(
+        `No results for "${query}"`,
+        'info'
+      );
+
+      return;
+    }
+
     hideStatus();
 
     found.forEach(n => {
+
       revealAncestors(n);
-      n._el.querySelector('.card').classList.add('highlight');
+
+      n._el.querySelector('.card')
+        .classList.add('highlight');
     });
 
     applyZoom(100);
 
     setTimeout(() => {
-      const wrap     = document.getElementById('canvas-wrap');
-      const firstCard = found[0]._el.querySelector('.card');
+
+      const wrap =
+        document.getElementById('canvas-wrap');
+
+      const firstCard =
+        found[0]._el.querySelector('.card');
+
       const cr = firstCard.getBoundingClientRect();
       const wr = wrap.getBoundingClientRect();
+
       wrap.scrollTo({
-        left: cr.left - wr.left + wrap.scrollLeft - wrap.clientWidth/2  + cr.width/2,
-        top:  cr.top  - wr.top  + wrap.scrollTop  - wrap.clientHeight/2 + cr.height/2,
+        left:
+          cr.left - wr.left +
+          wrap.scrollLeft -
+          wrap.clientWidth / 2 +
+          cr.width / 2,
+
+        top:
+          cr.top - wr.top +
+          wrap.scrollTop -
+          wrap.clientHeight / 2 +
+          cr.height / 2,
+
         behavior: 'smooth'
       });
+
     }, 300);
   }
 
-  // ── ZOOM ──
   function applyZoom(pct) {
-    canvas.style.transform = `scale(${pct/100})`;
-    slider.value           = pct;
-    zoomLabel.textContent  = pct + '%';
+
+    canvas.style.transform =
+      `scale(${pct/100})`;
+
+    slider.value = pct;
+
+    zoomLabel.textContent =
+      pct + '%';
   }
 
-  slider.addEventListener('input', () => applyZoom(Number(slider.value)));
-  document.getElementById('search').addEventListener('input', function() { doSearch(this.value); });
+  slider.addEventListener(
+    'input',
+    () => applyZoom(Number(slider.value))
+  );
+
+  document.getElementById('search')
+    .addEventListener(
+      'input',
+      function() {
+        doSearch(this.value);
+      }
+    );
 
   loadPeople();
+
 </script>
+
 </body>
 </html>
