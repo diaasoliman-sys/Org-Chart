@@ -1,306 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Innovative – Organization Chart</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --blue-deep: #0d3b6e;
-    --blue-mid: #1565c0;
-    --blue-bright: #1e88e5;
-    --teal: #00acc1;
-    --teal-light: #26c6da;
-    --accent: #00bcd4;
-    --bg: #f0f6ff;
-    --card: #ffffff;
-    --border: #cde0f5;
-    --text: #1a2d45;
-    --sub: #5a7799;
-    --tag: #e3f2fd;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
-
-  /* ── Header ── */
-  header {
-    background: linear-gradient(135deg, var(--blue-deep) 0%, #0a5fa0 60%, var(--teal) 100%);
-    padding: 28px 48px 22px;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    box-shadow: 0 4px 24px rgba(13,59,110,.35);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  header img { height: 68px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.3)); border-radius: 10px; background:#fff; padding:4px; object-fit:contain; }
-  header .header-text h1 {
-    font-family: 'Sora', sans-serif;
-    font-size: 1.7rem;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: .03em;
-  }
-  header .header-text p { color: rgba(255,255,255,.7); font-size: .88rem; margin-top: 4px; }
-
-  /* ── Toolbar ── */
-  .toolbar {
-    background: #fff;
-    border-bottom: 1px solid var(--border);
-    padding: 10px 48px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .toolbar label { font-size: .82rem; color: var(--sub); font-weight: 500; }
-  .toolbar input[type=range] { accent-color: var(--blue-bright); }
-  .toolbar .search-box {
-    margin-left: auto;
-    position: relative;
-  }
-  .toolbar .search-box input {
-    padding: 7px 14px 7px 36px;
-    border: 1.5px solid var(--border);
-    border-radius: 24px;
-    font-size: .84rem;
-    width: 220px;
-    outline: none;
-    transition: border .2s;
-  }
-  .toolbar .search-box input:focus { border-color: var(--blue-bright); }
-  .toolbar .search-box::before {
-    content: '🔍';
-    position: absolute;
-    left: 11px; top: 50%;
-    transform: translateY(-50%);
-    font-size: .8rem;
-    pointer-events: none;
-  }
-  .btn {
-    padding: 7px 16px;
-    border-radius: 20px;
-    font-size: .82rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1.5px solid var(--blue-bright);
-    color: var(--blue-bright);
-    background: #fff;
-    transition: all .18s;
-  }
-  .btn:hover { background: var(--blue-bright); color: #fff; }
-
-  /* ── Canvas ── */
-  #canvas-wrap {
-  overflow: auto;
-  height: calc(100vh - 130px);
-  padding: 40px;
-  position: relative;
-}
-
-#org-canvas {
-  width: max-content;
-  min-width: 100%;
-  transform-origin: top left;
-  transition: transform .25s ease;
-}
-
-  /* ── Node ── */
-  .node {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .card {
-    background: var(--card);
-    border: 1.5px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 18px 12px;
-    min-width: 170px;
-    max-width: 210px;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 2px 12px rgba(21,101,192,.10);
-    cursor: pointer;
-    transition: box-shadow .2s, transform .2s, border-color .2s;
-    user-select: none;
-  }
-  .card:hover { box-shadow: 0 8px 28px rgba(21,101,192,.22); transform: translateY(-2px); border-color: var(--blue-bright); }
-  .card.highlight { border-color: #f59e0b !important; box-shadow: 0 0 0 4px rgba(245,158,11,.4) !important; background: #fffbea !important; }
-  .card-avatar {
-    width: 40px; height: 40px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Sora', sans-serif;
-    font-weight: 700;
-    font-size: 1rem;
-    color: #fff;
-    margin: 0 auto 8px;
-    flex-shrink: 0;
-  }
-  .card-name {
-    font-family: 'Sora', sans-serif;
-    font-weight: 600;
-    font-size: .78rem;
-    line-height: 1.3;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-  .card-title {
-    font-size: .7rem;
-    color: var(--sub);
-    font-weight: 400;
-    line-height: 1.3;
-  }
-  .card-badge {
-    display: inline-block;
-    margin-top: 6px;
-    padding: 2px 9px;
-    border-radius: 10px;
-    font-size: .63rem;
-    font-weight: 600;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-  }
-  .collapse-btn {
-    position: absolute;
-    bottom: -11px; left: 50%;
-    transform: translateX(-50%);
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: var(--blue-bright);
-    color: #fff;
-    font-size: .7rem;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    border: 2px solid #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,.2);
-    z-index: 10;
-    transition: background .15s;
-  }
-  .collapse-btn:hover { background: var(--blue-deep); }
-
-  /* ── Tree connectors ── */
-  .children-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .v-line {
-    width: 2px;
-    height: 22px;
-    background: linear-gradient(to bottom, var(--blue-bright), var(--teal));
-    flex-shrink: 0;
-  }
-  .children-row {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-    position: relative;
-  }
-  .children-row::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(to right, transparent, var(--teal) 15%, var(--blue-bright) 85%, transparent);
-  }
-  .child-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .child-col > .v-line { height: 20px; }
-
-  /* ── Level colors ── */
-  .lvl-0 .card-avatar { background: linear-gradient(135deg, #0d3b6e, #1565c0); }
-  .lvl-0 .card { border-color: #1565c0; }
-  .lvl-0 .card-badge { background: #1565c0; color: #fff; }
-
-  .lvl-1 .card-avatar { background: linear-gradient(135deg, #1565c0, #00acc1); }
-  .lvl-1 .card-badge { background: #e3f5fb; color: #006d8a; }
-
-  .lvl-2 .card-avatar { background: linear-gradient(135deg, #00acc1, #26c6da); }
-  .lvl-2 .card-badge { background: #e0f7fa; color: #007c91; }
-
-  .lvl-3 .card-avatar { background: linear-gradient(135deg, #42a5f5, #81d4fa); }
-  .lvl-3 .card-badge { background: #e3f2fd; color: #1565c0; }
-
-  .lvl-4 .card-avatar { background: linear-gradient(135deg, #7ec8e3, #b3e5fc); }
-  .lvl-4 .card-badge { background: #e1f5fe; color: #0277bd; }
-
-  .lvl-5 .card-avatar { background: linear-gradient(135deg, #90caf9, #bbdefb); }
-  .lvl-5 .card-badge { background: #e8f4fd; color: #1976d2; }
-
-  /* ── Legend ── */
-  .legend {
-    position: fixed;
-    bottom: 20px; right: 20px;
-    background: #fff;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-size: .72rem;
-    box-shadow: 0 4px 16px rgba(0,0,0,.1);
-    z-index: 200;
-  }
-  .legend h4 { font-family: 'Sora',sans-serif; font-size: .75rem; margin-bottom: 8px; color: var(--blue-deep); }
-  .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; color: var(--sub); }
-  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-</style>
-</head>
-<body>
-
-<header>
-  <img id="logo-img" alt="Innovative logo">
-  <div class="header-text">
-    <h1>Organization Chart</h1>
-    <p>Innovative · Full Staff Directory</p>
-  </div>
-</header>
-
-<div class="toolbar">
-  <label>Zoom</label>
-  <input type="range" id="zoom-slider" min="30" max="130" value="80">
-  <span id="zoom-label" style="font-size:.8rem;color:var(--sub);width:38px">80%</span>
-  <button class="btn" onclick="expandAll()">Expand All</button>
-  <button class="btn" onclick="collapseAll()">Collapse All</button>
-  <div class="search-box">
-    <input type="text" id="search" placeholder="Search by name or title…">
-  </div>
-</div>
-
-<div id="canvas-wrap">
-  <div id="org-canvas"></div>
-</div>
-
-<div class="legend">
-  <h4>Hierarchy Level</h4>
-  <div class="legend-row"><div class="legend-dot" style="background:#0d3b6e"></div>CEO</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#1565c0"></div>Directors / GMs</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#00acc1"></div>Managers / Heads</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#42a5f5"></div>Supervisors / Seniors</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#7ec8e3"></div>Team Leaders / SMEs</div>
-  <div class="legend-row"><div class="legend-dot" style="background:#90caf9"></div>Specialists / Staff</div>
-</div>
-
 <script>
+
 // ── Logo ──
 document.getElementById('logo-img').src = 'logo.jpg.png';
 
-// ── Full org data ──
-// ── Load Org Data From Google Sheets ──
-
+// ── Google Sheets Org Data ──
 let people = [];
 let byName = {};
 let roots = [];
+
+const collapsed = new Set();
+const allNodes = [];
 
 async function loadPeople() {
 
@@ -316,37 +25,48 @@ async function loadPeople() {
     const data = await response.json();
 
     people = data.map(row => ({
-  name: (row.Name || '').trim(),
 
-  title: (row.Title || '').trim(),
+      name: (row.Name || '').trim(),
 
-  manager:
-    row['Direct manager'] &&
-    row['Direct manager'].trim() !== '-' &&
-    row['Direct manager'].trim() !== ''
-      ? row['Direct manager'].trim()
-      : null,
+      title: (row.Title || '').trim(),
 
-  level: Number(row['Hierarchy Level'] || 0)
-}));
+      manager:
+        row['Direct manager'] &&
+        row['Direct manager'].trim() !== '-' &&
+        row['Direct manager'].trim() !== ''
+          ? row['Direct manager'].trim()
+          : null,
+
+      level:
+        row['Hierarchy Level'] &&
+        row['Hierarchy Level'].trim() !== ''
+          ? Number(row['Hierarchy Level'])
+          : null
+
+    }));
 
     buildTree();
 
   } catch (err) {
+
     console.error('Failed loading Google Sheet:', err);
+
   }
 }
 
+// ── Build Tree ──
 function buildTree() {
 
   byName = {};
   roots = [];
 
   people.forEach(p => {
+
     byName[p.name] = {
       ...p,
       children: []
     };
+
   });
 
   people.forEach(p => {
@@ -362,9 +82,18 @@ function buildTree() {
       byName[p.manager].children.push(node);
 
     }
+
+  });
+
+  // Auto assign levels if empty
+  roots.forEach(root => {
+    assignAutoLevels(root);
   });
 
   allNodes.length = 0;
+
+  const currentZoom =
+    canvas.style.transform || 'scale(0.8)';
 
   canvas.innerHTML = '';
 
@@ -376,204 +105,427 @@ function buildTree() {
 
   }
 
-  canvas.style.transform = 'scale(0.8)';
+  canvas.style.transform = currentZoom;
 
   collapseAll();
 }
 
-const COLORS = ['#0d3b6e','#1565c0','#00acc1','#42a5f5','#7ec8e3','#90caf9'];
-function levelColor(lvl) { return COLORS[Math.min(lvl, COLORS.length - 1)]; }
+// ── Auto Level Assignment ──
+function assignAutoLevels(node, level = 0) {
+
+  if (node.level === null || isNaN(node.level)) {
+    node.level = level;
+  }
+
+  node.children.forEach(child => {
+    assignAutoLevels(child, node.level + 1);
+  });
+}
+
+// ── Styling Helpers ──
+const COLORS = [
+  '#0d3b6e',
+  '#1565c0',
+  '#00acc1',
+  '#42a5f5',
+  '#7ec8e3',
+  '#90caf9'
+];
+
+function levelColor(lvl) {
+
+  return COLORS[
+    Math.min(lvl, COLORS.length - 1)
+  ];
+}
+
 function initials(name) {
-  return name.replace(/_TL\d+$/,'').split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+
+  return name
+    .replace(/_TL\d+$/,'')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(w => w[0].toUpperCase())
+    .join('');
 }
+
 function shortName(name) {
+
   const clean = name.replace(/_TL\d+$/,'');
-  const parts = clean.split(' ').filter(Boolean);
-  return parts.length <= 3 ? clean : parts[0] + ' ' + parts[1] + ' ' + parts[parts.length - 1];
+
+  const parts = clean
+    .split(' ')
+    .filter(Boolean);
+
+  return parts.length <= 3
+    ? clean
+    : parts[0] + ' ' +
+      parts[1] + ' ' +
+      parts[parts.length - 1];
 }
+
 function badgeLabel(lvl) {
-  return ['Executive','Director','Manager','Senior','Team Leader','Staff'][Math.min(lvl, 5)];
+
+  return [
+    'Executive',
+    'Director',
+    'Manager',
+    'Senior',
+    'Team Leader',
+    'Staff'
+  ][Math.min(lvl, 5)];
 }
 
-const collapsed = new Set();
-const allNodes = [];
-
+// ── Build Node ──
 function buildNode(node) {
-  allNodes.push(node);
-  const wrap = document.createElement('div');
-  wrap.className = `node lvl-$Math.min(node.level, 5)}`;
-  wrap.dataset.name = node.name.replace(/_TL\d+$/,'').toLowerCase();
-  wrap.dataset.title = node.title.toLowerCase();
 
-  const card = document.createElement('div');
+  allNodes.push(node);
+
+  const wrap = document.createElement('div');
+
+  wrap.className =
+    `node lvl-${Math.min(node.level, 5)}`;
+
+  wrap.dataset.name =
+    node.name
+      .replace(/_TL\d+$/,'')
+      .toLowerCase();
+
+  wrap.dataset.title =
+    node.title.toLowerCase();
+
+  const card =
+    document.createElement('div');
+
   card.className = 'card';
+
   card.innerHTML = `
-    <div class="card-avatar" style="background:linear-gradient(135deg,${levelColor(level+1)},${levelColor(level+1)})">
+    <div class="card-avatar"
+      style="
+        background:
+        linear-gradient(
+          135deg,
+          ${levelColor(node.level)},
+          ${levelColor(node.level + 1)}
+        )
+      ">
       ${initials(node.name)}
     </div>
-    <div class="card-name">${shortName(node.name)}</div>
-    <div class="card-title">${node.title}</div>
-    <div class="card-badge">${badgeLabel(node.level)}</div>
+
+    <div class="card-name">
+      ${shortName(node.name)}
+    </div>
+
+    <div class="card-title">
+      ${node.title}
+    </div>
+
+    <div class="card-badge">
+      ${badgeLabel(node.level)}
+    </div>
   `;
+
   wrap.appendChild(card);
 
+  // ── Children ──
   if (node.children.length > 0) {
-    const btn = document.createElement('div');
+
+    const btn =
+      document.createElement('div');
+
     btn.className = 'collapse-btn';
     btn.title = 'Expand / Collapse';
     btn.textContent = '−';
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      toggleNode(node.name, childrenWrap, btn);
-    });
+
     card.appendChild(btn);
 
-    const childrenWrap = document.createElement('div');
-    childrenWrap.className = 'children-wrap';
+    const childrenWrap =
+      document.createElement('div');
 
-    const vLine = document.createElement('div');
+    childrenWrap.className =
+      'children-wrap';
+
+    const vLine =
+      document.createElement('div');
+
     vLine.className = 'v-line';
+
     childrenWrap.appendChild(vLine);
 
-    const row = document.createElement('div');
+    const row =
+      document.createElement('div');
+
     row.className = 'children-row';
 
     node.children.forEach(child => {
-      const col = document.createElement('div');
+
+      const col =
+        document.createElement('div');
+
       col.className = 'child-col';
-      const vl = document.createElement('div');
+
+      const vl =
+        document.createElement('div');
+
       vl.className = 'v-line';
+
       col.appendChild(vl);
-      col.appendChild(buildNode(child));
+
+      col.appendChild(
+        buildNode(child)
+      );
+
       row.appendChild(col);
+
     });
 
     childrenWrap.appendChild(row);
+
     wrap.appendChild(childrenWrap);
+
     node._childrenWrap = childrenWrap;
     node._btn = btn;
+
+    btn.addEventListener('click', e => {
+
+      e.stopPropagation();
+
+      toggleNode(
+        node.name,
+        childrenWrap,
+        btn
+      );
+
+    });
   }
 
   node._el = wrap;
+
   return wrap;
 }
 
+// ── Toggle ──
 function toggleNode(name, wrap, btn) {
+
   if (collapsed.has(name)) {
+
     collapsed.delete(name);
+
     wrap.style.display = '';
+
     btn.textContent = '−';
+
   } else {
+
     collapsed.add(name);
+
     wrap.style.display = 'none';
+
     btn.textContent = '+';
   }
 }
 
 function expandAll() {
+
   collapsed.clear();
+
   allNodes.forEach(n => {
-    if (n._childrenWrap) { n._childrenWrap.style.display = ''; n._btn.textContent = '−'; }
+
+    if (n._childrenWrap) {
+
+      n._childrenWrap.style.display = '';
+
+      n._btn.textContent = '−';
+    }
+
   });
 }
 
 function collapseAll() {
+
   allNodes.forEach(n => {
+
     if (n._childrenWrap && n.manager) {
+
       collapsed.add(n.name);
+
       n._childrenWrap.style.display = 'none';
+
       n._btn.textContent = '+';
     }
+
   });
 }
 
+// ── Search ──
 function revealAncestors(node) {
+
   let current = node;
+
   while (current.manager) {
+
     const mgr = byName[current.manager];
+
     if (!mgr) break;
-    if (mgr._childrenWrap && collapsed.has(mgr.name)) {
+
+    if (
+      mgr._childrenWrap &&
+      collapsed.has(mgr.name)
+    ) {
+
       collapsed.delete(mgr.name);
+
       mgr._childrenWrap.style.display = '';
-      if (mgr._btn) mgr._btn.textContent = '−';
+
+      if (mgr._btn) {
+        mgr._btn.textContent = '−';
+      }
     }
+
     current = mgr;
   }
 }
 
 function doSearch(q) {
-  const term = q.toLowerCase().trim();
 
-  // Remove old highlights
+  const term =
+    q.toLowerCase().trim();
+
   allNodes.forEach(n => {
+
     if (n._el) {
-      n._el.querySelector('.card').classList.remove('highlight');
+
+      n._el
+        .querySelector('.card')
+        .classList
+        .remove('highlight');
     }
   });
 
   if (!term) return;
 
-  // Find matching node
   const found = allNodes.find(n => {
-    const name = (n._el.dataset.name || '');
-    const title = (n._el.dataset.title || '');
-    return name.includes(term) || title.includes(term);
+
+    const name =
+      n._el.dataset.name || '';
+
+    const title =
+      n._el.dataset.title || '';
+
+    return (
+      name.includes(term) ||
+      title.includes(term)
+    );
   });
 
   if (!found) return;
 
-  // Open parent hierarchy
   revealAncestors(found);
 
-  // Highlight card
-  const card = found._el.querySelector('.card');
+  const card =
+    found._el.querySelector('.card');
+
   card.classList.add('highlight');
 
-  // Auto zoom
   const zoom = 1;
-  canvas.style.transform = `scale(${zoom})`;
-  slider.value = zoom * 100;
-  zoomLabel.textContent = `${zoom * 100}%`;
 
-  // Manual smooth center scroll
+  canvas.style.transform =
+    `scale(${zoom})`;
+
+  slider.value = zoom * 100;
+
+  zoomLabel.textContent =
+    `${zoom * 100}%`;
+
   setTimeout(() => {
 
-    const wrap = document.getElementById('canvas-wrap');
+    const wrap =
+      document.getElementById(
+        'canvas-wrap'
+      );
 
-    const cardRect = card.getBoundingClientRect();
-    const wrapRect = wrap.getBoundingClientRect();
+    const cardRect =
+      card.getBoundingClientRect();
+
+    const wrapRect =
+      wrap.getBoundingClientRect();
 
     const offsetLeft =
-      cardRect.left - wrapRect.left + wrap.scrollLeft;
+      cardRect.left -
+      wrapRect.left +
+      wrap.scrollLeft;
 
     const offsetTop =
-      cardRect.top - wrapRect.top + wrap.scrollTop;
+      cardRect.top -
+      wrapRect.top +
+      wrap.scrollTop;
 
     wrap.scrollTo({
-      left: offsetLeft - wrap.clientWidth / 2 + cardRect.width / 2,
-      top: offsetTop - wrap.clientHeight / 2 + cardRect.height / 2,
+
+      left:
+        offsetLeft -
+        wrap.clientWidth / 2 +
+        cardRect.width / 2,
+
+      top:
+        offsetTop -
+        wrap.clientHeight / 2 +
+        cardRect.height / 2,
+
       behavior: 'smooth'
+
     });
 
   }, 300);
 }
+
 // ── Zoom ──
-const slider = document.getElementById('zoom-slider');
-const zoomLabel = document.getElementById('zoom-label');
-const canvas = document.getElementById('org-canvas');
+const slider =
+  document.getElementById(
+    'zoom-slider'
+  );
+
+const zoomLabel =
+  document.getElementById(
+    'zoom-label'
+  );
+
+const canvas =
+  document.getElementById(
+    'org-canvas'
+  );
+
 slider.addEventListener('input', () => {
-  const z = slider.value / 100;
-  canvas.style.transform = `scale(${z})`;
-  zoomLabel.textContent = slider.value + '%';
+
+  const z =
+    slider.value / 100;
+
+  canvas.style.transform =
+    `scale(${z})`;
+
+  zoomLabel.textContent =
+    slider.value + '%';
 });
 
-// ── Search ──
-document.getElementById('search').addEventListener('input', function() {
-  doSearch(this.value);
-});
+// ── Search Event ──
+document
+  .getElementById('search')
+  .addEventListener(
+    'input',
+    function() {
+      doSearch(this.value);
+    }
+  );
 
-// ── Render ──
+// ── Initial Load ──
 loadPeople();
+
+// ── Auto Refresh Every 30 Seconds ──
+setInterval(() => {
+
+  loadPeople();
+
+}, 30000);
+
 </script>
-</body>
-</html>
