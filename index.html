@@ -594,20 +594,47 @@ function revealAncestors(node) {
 
 function doSearch(q) {
   const term = q.toLowerCase().trim();
+
+  // Remove previous highlights
   allNodes.forEach(n => {
-    if (n._el) n._el.querySelector('.card').classList.remove('highlight');
-  });
-  if (!term) return;
-  allNodes.forEach(n => {
-    if (!n._el) return;
-    const match = (n._el.dataset.name||'').includes(term) || (n._el.dataset.title||'').includes(term);
-    if (match) {
-      n._el.querySelector('.card').classList.add('highlight');
-      revealAncestors(n);
+    if (n._el) {
+      n._el.querySelector('.card').classList.remove('highlight');
     }
   });
-}
 
+  if (!term) return;
+
+  // Find first matching node
+  const found = allNodes.find(n => {
+    const name = (n._el.dataset.name || '');
+    const title = (n._el.dataset.title || '');
+    return name.includes(term) || title.includes(term);
+  });
+
+  if (!found) return;
+
+  // Reveal parents
+  revealAncestors(found);
+
+  // Highlight
+  const card = found._el.querySelector('.card');
+  card.classList.add('highlight');
+
+  // Auto zoom (optional)
+  const zoom = 1;
+  canvas.style.transform = `scale(${zoom})`;
+  slider.value = zoom * 100;
+  zoomLabel.textContent = `${zoom * 100}%`;
+
+  // Smooth scroll to card
+  setTimeout(() => {
+    card.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'center'
+    });
+  }, 250);
+}
 // ── Zoom ──
 const slider = document.getElementById('zoom-slider');
 const zoomLabel = document.getElementById('zoom-label');
