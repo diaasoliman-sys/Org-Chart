@@ -102,17 +102,13 @@
   overflow: auto;
   height: calc(100vh - 130px);
   padding: 40px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  position: relative;
 }
-  #org-canvas {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+
+#org-canvas {
   width: max-content;
-  margin: 0 auto;
-  transform-origin: top center;
+  min-width: 100%;
+  transform-origin: top left;
   transition: transform .25s ease;
 }
 
