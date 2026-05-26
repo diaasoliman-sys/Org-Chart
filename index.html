@@ -3,7 +3,10 @@
 // ── Logo ──
 document.getElementById('logo-img').src = 'logo.jpg.png';
 
-// ── Google Sheets Org Data ──
+// ─────────────────────────────────────────────
+// LOAD DATA FROM GOOGLE SHEETS
+// ─────────────────────────────────────────────
+
 let people = [];
 let byName = {};
 let roots = [];
@@ -11,9 +14,13 @@ let roots = [];
 const collapsed = new Set();
 const allNodes = [];
 
+const canvas = document.getElementById('org-canvas');
+
 async function loadPeople() {
 
-  const SHEET_ID = '1kO9rERWJgxg-OXUn8vOsnx2UydEWWU6P88J23Yhuqi4';
+  const SHEET_ID =
+    '1kO9rERWJgxg-OXUn8vOsnx2UydEWWU6P88J23Yhuqi4';
+
   const SHEET_NAME = 'Sheet1';
 
   const url =
@@ -22,39 +29,50 @@ async function loadPeople() {
   try {
 
     const response = await fetch(url);
+
     const data = await response.json();
 
-    people = data.map(row => ({
+    people = data
+      .filter(row => row.Name && row.Name.trim() !== '')
+      .map(row => ({
 
-      name: (row.Name || '').trim(),
+        name:
+          (row.Name || '').trim(),
 
-      title: (row.Title || '').trim(),
+        title:
+          (row.Title || '').trim(),
 
-      manager:
-        row['Direct manager'] &&
-        row['Direct manager'].trim() !== '-' &&
-        row['Direct manager'].trim() !== ''
-          ? row['Direct manager'].trim()
-          : null,
+        manager:
+          row['Direct manager'] &&
+          row['Direct manager'].trim() !== '-' &&
+          row['Direct manager'].trim() !== ''
+            ? row['Direct manager'].trim()
+            : null,
 
-      level:
-        row['Hierarchy Level'] &&
-        row['Hierarchy Level'].trim() !== ''
-          ? Number(row['Hierarchy Level'])
-          : null
+        level:
+          row['Hierarchy Level'] &&
+          row['Hierarchy Level'].trim() !== ''
+            ? Number(row['Hierarchy Level'])
+            : null
 
-    }));
+      }));
 
     buildTree();
 
   } catch (err) {
 
-    console.error('Failed loading Google Sheet:', err);
+    console.error(
+      'Failed loading Google Sheet:',
+      err
+    );
 
   }
 }
 
-// ── Build Tree ──
+// ─────────────────────────────────────────────
+// BUILD TREE
+// ─────────────────────────────────────────────
+
 function buildTree() {
 
   byName = {};
@@ -73,56 +91,44 @@ function buildTree() {
 
     const node = byName[p.name];
 
-    if (!p.manager || !byName[p.manager]) {
+    if (
+      !p.manager ||
+      !byName[p.manager]
+    ) {
 
       roots.push(node);
 
     } else {
 
-      byName[p.manager].children.push(node);
+      byName[p.manager]
+        .children
+        .push(node);
 
     }
 
   });
 
-  // Auto assign levels if empty
-  roots.forEach(root => {
-    assignAutoLevels(root);
-  });
-
   allNodes.length = 0;
-
-  const currentZoom =
-    canvas.style.transform || 'scale(0.8)';
 
   canvas.innerHTML = '';
 
-  if (roots.length > 0) {
+  roots.forEach(root => {
 
     canvas.appendChild(
-      buildNode(roots[0])
+      buildNode(root)
     );
 
-  }
+  });
 
-  canvas.style.transform = currentZoom;
+  canvas.style.transform = 'scale(0.8)';
 
   collapseAll();
 }
 
-// ── Auto Level Assignment ──
-function assignAutoLevels(node, level = 0) {
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
 
-  if (node.level === null || isNaN(node.level)) {
-    node.level = level;
-  }
-
-  node.children.forEach(child => {
-    assignAutoLevels(child, node.level + 1);
-  });
-}
-
-// ── Styling Helpers ──
 const COLORS = [
   '#0d3b6e',
   '#1565c0',
@@ -137,6 +143,7 @@ function levelColor(lvl) {
   return COLORS[
     Math.min(lvl, COLORS.length - 1)
   ];
+
 }
 
 function initials(name) {
@@ -148,21 +155,25 @@ function initials(name) {
     .slice(0, 2)
     .map(w => w[0].toUpperCase())
     .join('');
+
 }
 
 function shortName(name) {
 
-  const clean = name.replace(/_TL\d+$/,'');
+  const clean =
+    name.replace(/_TL\d+$/,'');
 
-  const parts = clean
-    .split(' ')
-    .filter(Boolean);
+  const parts =
+    clean.split(' ').filter(Boolean);
 
   return parts.length <= 3
     ? clean
-    : parts[0] + ' ' +
-      parts[1] + ' ' +
+    : parts[0] +
+      ' ' +
+      parts[1] +
+      ' ' +
       parts[parts.length - 1];
+
 }
 
 function badgeLabel(lvl) {
@@ -175,17 +186,28 @@ function badgeLabel(lvl) {
     'Team Leader',
     'Staff'
   ][Math.min(lvl, 5)];
+
 }
 
-// ── Build Node ──
+// ─────────────────────────────────────────────
+// BUILD NODE
+// ─────────────────────────────────────────────
+
 function buildNode(node) {
 
   allNodes.push(node);
 
-  const wrap = document.createElement('div');
+  const level =
+    node.level !== null &&
+    !isNaN(node.level)
+      ? node.level
+      : 5;
+
+  const wrap =
+    document.createElement('div');
 
   wrap.className =
-    `node lvl-${Math.min(node.level, 5)}`;
+    `node lvl-${Math.min(level, 5)}`;
 
   wrap.dataset.name =
     node.name
@@ -201,15 +223,17 @@ function buildNode(node) {
   card.className = 'card';
 
   card.innerHTML = `
-    <div class="card-avatar"
+    <div
+      class="card-avatar"
       style="
         background:
         linear-gradient(
           135deg,
-          ${levelColor(node.level)},
-          ${levelColor(node.level + 1)}
+          ${levelColor(level)},
+          ${levelColor(level + 1)}
         )
-      ">
+      "
+    >
       ${initials(node.name)}
     </div>
 
@@ -222,20 +246,25 @@ function buildNode(node) {
     </div>
 
     <div class="card-badge">
-      ${badgeLabel(node.level)}
+      ${badgeLabel(level)}
     </div>
   `;
 
   wrap.appendChild(card);
 
-  // ── Children ──
+  // ── CHILDREN ──
+
   if (node.children.length > 0) {
 
     const btn =
       document.createElement('div');
 
-    btn.className = 'collapse-btn';
-    btn.title = 'Expand / Collapse';
+    btn.className =
+      'collapse-btn';
+
+    btn.title =
+      'Expand / Collapse';
+
     btn.textContent = '−';
 
     card.appendChild(btn);
@@ -256,14 +285,16 @@ function buildNode(node) {
     const row =
       document.createElement('div');
 
-    row.className = 'children-row';
+    row.className =
+      'children-row';
 
     node.children.forEach(child => {
 
       const col =
         document.createElement('div');
 
-      col.className = 'child-col';
+      col.className =
+        'child-col';
 
       const vl =
         document.createElement('div');
@@ -284,20 +315,25 @@ function buildNode(node) {
 
     wrap.appendChild(childrenWrap);
 
-    node._childrenWrap = childrenWrap;
+    node._childrenWrap =
+      childrenWrap;
+
     node._btn = btn;
 
-    btn.addEventListener('click', e => {
+    btn.addEventListener(
+      'click',
+      e => {
 
-      e.stopPropagation();
+        e.stopPropagation();
 
-      toggleNode(
-        node.name,
-        childrenWrap,
-        btn
-      );
+        toggleNode(
+          node.name,
+          childrenWrap,
+          btn
+        );
 
-    });
+      }
+    );
   }
 
   node._el = wrap;
@@ -305,8 +341,15 @@ function buildNode(node) {
   return wrap;
 }
 
-// ── Toggle ──
-function toggleNode(name, wrap, btn) {
+// ─────────────────────────────────────────────
+// COLLAPSE / EXPAND
+// ─────────────────────────────────────────────
+
+function toggleNode(
+  name,
+  wrap,
+  btn
+) {
 
   if (collapsed.has(name)) {
 
@@ -323,6 +366,7 @@ function toggleNode(name, wrap, btn) {
     wrap.style.display = 'none';
 
     btn.textContent = '+';
+
   }
 }
 
@@ -337,6 +381,7 @@ function expandAll() {
       n._childrenWrap.style.display = '';
 
       n._btn.textContent = '−';
+
     }
 
   });
@@ -346,26 +391,35 @@ function collapseAll() {
 
   allNodes.forEach(n => {
 
-    if (n._childrenWrap && n.manager) {
+    if (
+      n._childrenWrap &&
+      n.manager
+    ) {
 
       collapsed.add(n.name);
 
-      n._childrenWrap.style.display = 'none';
+      n._childrenWrap.style.display =
+        'none';
 
       n._btn.textContent = '+';
+
     }
 
   });
 }
 
-// ── Search ──
+// ─────────────────────────────────────────────
+// SEARCH
+// ─────────────────────────────────────────────
+
 function revealAncestors(node) {
 
   let current = node;
 
   while (current.manager) {
 
-    const mgr = byName[current.manager];
+    const mgr =
+      byName[current.manager];
 
     if (!mgr) break;
 
@@ -376,11 +430,11 @@ function revealAncestors(node) {
 
       collapsed.delete(mgr.name);
 
-      mgr._childrenWrap.style.display = '';
+      mgr._childrenWrap.style.display =
+        '';
 
-      if (mgr._btn) {
-        mgr._btn.textContent = '−';
-      }
+      mgr._btn.textContent = '−';
+
     }
 
     current = mgr;
@@ -400,24 +454,28 @@ function doSearch(q) {
         .querySelector('.card')
         .classList
         .remove('highlight');
+
     }
+
   });
 
   if (!term) return;
 
-  const found = allNodes.find(n => {
+  const found =
+    allNodes.find(n => {
 
-    const name =
-      n._el.dataset.name || '';
+      const name =
+        n._el.dataset.name || '';
 
-    const title =
-      n._el.dataset.title || '';
+      const title =
+        n._el.dataset.title || '';
 
-    return (
-      name.includes(term) ||
-      title.includes(term)
-    );
-  });
+      return (
+        name.includes(term) ||
+        title.includes(term)
+      );
+
+    });
 
   if (!found) return;
 
@@ -480,7 +538,10 @@ function doSearch(q) {
   }, 300);
 }
 
-// ── Zoom ──
+// ─────────────────────────────────────────────
+// ZOOM
+// ─────────────────────────────────────────────
+
 const slider =
   document.getElementById(
     'zoom-slider'
@@ -491,41 +552,41 @@ const zoomLabel =
     'zoom-label'
   );
 
-const canvas =
-  document.getElementById(
-    'org-canvas'
-  );
+slider.addEventListener(
+  'input',
+  () => {
 
-slider.addEventListener('input', () => {
+    const z =
+      slider.value / 100;
 
-  const z =
-    slider.value / 100;
+    canvas.style.transform =
+      `scale(${z})`;
 
-  canvas.style.transform =
-    `scale(${z})`;
+    zoomLabel.textContent =
+      slider.value + '%';
 
-  zoomLabel.textContent =
-    slider.value + '%';
-});
+  }
+);
 
-// ── Search Event ──
+// ─────────────────────────────────────────────
+// SEARCH INPUT
+// ─────────────────────────────────────────────
+
 document
   .getElementById('search')
   .addEventListener(
     'input',
     function() {
+
       doSearch(this.value);
+
     }
   );
 
-// ── Initial Load ──
+// ─────────────────────────────────────────────
+// INITIAL LOAD
+// ─────────────────────────────────────────────
+
 loadPeople();
-
-// ── Auto Refresh Every 30 Seconds ──
-setInterval(() => {
-
-  loadPeople();
-
-}, 30000);
 
 </script>
