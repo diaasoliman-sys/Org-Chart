@@ -1,10 +1,13 @@
 <script>
 
-// ── Logo ──
+// ─────────────────────────────────────────────
+// LOGO
+// ─────────────────────────────────────────────
+
 document.getElementById('logo-img').src = 'logo.jpg.png';
 
 // ─────────────────────────────────────────────
-// LOAD DATA FROM GOOGLE SHEETS
+// GLOBALS
 // ─────────────────────────────────────────────
 
 let people = [];
@@ -14,46 +17,71 @@ let roots = [];
 const collapsed = new Set();
 const allNodes = [];
 
-const canvas = document.getElementById('org-canvas');
+const canvas =
+  document.getElementById('org-canvas');
+
+const slider =
+  document.getElementById('zoom-slider');
+
+const zoomLabel =
+  document.getElementById('zoom-label');
+
+// ─────────────────────────────────────────────
+// LOAD GOOGLE SHEET
+// ─────────────────────────────────────────────
 
 async function loadPeople() {
 
   const SHEET_ID =
     '1kO9rERWJgxg-OXUn8vOsnx2UydEWWU6P88J23Yhuqi4';
 
-  const SHEET_NAME = 'Sheet1';
+  const SHEET_NAME =
+    'Sheet1';
 
   const url =
     `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
 
   try {
 
-    const response = await fetch(url);
+    const response =
+      await fetch(url);
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     people = data
-      .filter(row => row.Name && row.Name.trim() !== '')
+      .filter(row =>
+        row.Name &&
+        row.Name.trim() !== ''
+      )
       .map(row => ({
 
         name:
-          (row.Name || '').trim(),
+          (row.Name || '')
+            .trim(),
 
         title:
-          (row.Title || '').trim(),
+          (row.Title || '')
+            .trim(),
 
         manager:
           row['Direct manager'] &&
-          row['Direct manager'].trim() !== '-' &&
-          row['Direct manager'].trim() !== ''
-            ? row['Direct manager'].trim()
+          row['Direct manager']
+            .trim() !== '-' &&
+          row['Direct manager']
+            .trim() !== ''
+            ? row['Direct manager']
+                .trim()
             : null,
 
         level:
           row['Hierarchy Level'] &&
-          row['Hierarchy Level'].trim() !== ''
-            ? Number(row['Hierarchy Level'])
-            : null
+          row['Hierarchy Level']
+            .trim() !== ''
+            ? Number(
+                row['Hierarchy Level']
+              )
+            : 5
 
       }));
 
@@ -62,7 +90,7 @@ async function loadPeople() {
   } catch (err) {
 
     console.error(
-      'Failed loading Google Sheet:',
+      'Error loading sheet:',
       err
     );
 
@@ -78,29 +106,33 @@ function buildTree() {
   byName = {};
   roots = [];
 
-  people.forEach(p => {
+  people.forEach(person => {
 
-    byName[p.name] = {
-      ...p,
+    byName[person.name] = {
+
+      ...person,
+
       children: []
+
     };
 
   });
 
-  people.forEach(p => {
+  people.forEach(person => {
 
-    const node = byName[p.name];
+    const node =
+      byName[person.name];
 
     if (
-      !p.manager ||
-      !byName[p.manager]
+      !person.manager ||
+      !byName[person.manager]
     ) {
 
       roots.push(node);
 
     } else {
 
-      byName[p.manager]
+      byName[person.manager]
         .children
         .push(node);
 
@@ -108,9 +140,9 @@ function buildTree() {
 
   });
 
-  allNodes.length = 0;
-
   canvas.innerHTML = '';
+
+  allNodes.length = 0;
 
   roots.forEach(root => {
 
@@ -120,35 +152,42 @@ function buildTree() {
 
   });
 
-  canvas.style.transform = 'scale(0.8)';
+  canvas.style.transform =
+    'scale(0.8)';
 
   collapseAll();
 }
 
 // ─────────────────────────────────────────────
-// HELPERS
+// COLORS
 // ─────────────────────────────────────────────
 
 const COLORS = [
+
   '#0d3b6e',
   '#1565c0',
   '#00acc1',
   '#42a5f5',
   '#7ec8e3',
   '#90caf9'
+
 ];
 
-function levelColor(lvl) {
+function levelColor(level) {
 
   return COLORS[
-    Math.min(lvl, COLORS.length - 1)
+    Math.min(level, 5)
   ];
 
 }
 
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+
 function initials(name) {
 
-  return name
+  return (name || '')
     .replace(/_TL\d+$/,'')
     .split(' ')
     .filter(Boolean)
@@ -161,31 +200,39 @@ function initials(name) {
 function shortName(name) {
 
   const clean =
-    name.replace(/_TL\d+$/,'');
+    (name || '')
+      .replace(/_TL\d+$/,'');
 
   const parts =
-    clean.split(' ').filter(Boolean);
+    clean
+      .split(' ')
+      .filter(Boolean);
 
-  return parts.length <= 3
-    ? clean
-    : parts[0] +
-      ' ' +
-      parts[1] +
-      ' ' +
-      parts[parts.length - 1];
+  if (parts.length <= 3)
+    return clean;
+
+  return (
+    parts[0] +
+    ' ' +
+    parts[1] +
+    ' ' +
+    parts[parts.length - 1]
+  );
 
 }
 
-function badgeLabel(lvl) {
+function badgeLabel(level) {
 
   return [
+
     'Executive',
     'Director',
     'Manager',
     'Senior',
     'Team Leader',
     'Staff'
-  ][Math.min(lvl, 5)];
+
+  ][Math.min(level, 5)];
 
 }
 
@@ -200,7 +247,7 @@ function buildNode(node) {
   const level =
     node.level !== null &&
     !isNaN(node.level)
-      ? node.level
+      ? Number(node.level)
       : 5;
 
   const wrap =
@@ -210,12 +257,14 @@ function buildNode(node) {
     `node lvl-${Math.min(level, 5)}`;
 
   wrap.dataset.name =
-    node.name
-      .replace(/_TL\d+$/,'')
+    (node.name || '')
       .toLowerCase();
 
   wrap.dataset.title =
-    node.title.toLowerCase();
+    (node.title || '')
+      .toLowerCase();
+
+  // ── CARD ──
 
   const card =
     document.createElement('div');
@@ -223,6 +272,7 @@ function buildNode(node) {
   card.className = 'card';
 
   card.innerHTML = `
+
     <div
       class="card-avatar"
       style="
@@ -230,31 +280,47 @@ function buildNode(node) {
         linear-gradient(
           135deg,
           ${levelColor(level)},
-          ${levelColor(level + 1)}
+          ${levelColor(
+            Math.min(level + 1, 5)
+          )}
         )
       "
     >
+
       ${initials(node.name)}
+
     </div>
 
     <div class="card-name">
+
       ${shortName(node.name)}
+
     </div>
 
     <div class="card-title">
-      ${node.title}
+
+      ${node.title || ''}
+
     </div>
 
     <div class="card-badge">
+
       ${badgeLabel(level)}
+
     </div>
+
   `;
 
   wrap.appendChild(card);
 
-  // ── CHILDREN ──
+  // ─────────────────────────
+  // CHILDREN
+  // ─────────────────────────
 
-  if (node.children.length > 0) {
+  if (
+    node.children &&
+    node.children.length > 0
+  ) {
 
     const btn =
       document.createElement('div');
@@ -262,10 +328,10 @@ function buildNode(node) {
     btn.className =
       'collapse-btn';
 
+    btn.textContent = '−';
+
     btn.title =
       'Expand / Collapse';
-
-    btn.textContent = '−';
 
     card.appendChild(btn);
 
@@ -296,12 +362,13 @@ function buildNode(node) {
       col.className =
         'child-col';
 
-      const vl =
+      const childLine =
         document.createElement('div');
 
-      vl.className = 'v-line';
+      childLine.className =
+        'v-line';
 
-      col.appendChild(vl);
+      col.appendChild(childLine);
 
       col.appendChild(
         buildNode(child)
@@ -342,7 +409,7 @@ function buildNode(node) {
 }
 
 // ─────────────────────────────────────────────
-// COLLAPSE / EXPAND
+// TOGGLE
 // ─────────────────────────────────────────────
 
 function toggleNode(
@@ -370,17 +437,22 @@ function toggleNode(
   }
 }
 
+// ─────────────────────────────────────────────
+// EXPAND / COLLAPSE ALL
+// ─────────────────────────────────────────────
+
 function expandAll() {
 
   collapsed.clear();
 
-  allNodes.forEach(n => {
+  allNodes.forEach(node => {
 
-    if (n._childrenWrap) {
+    if (node._childrenWrap) {
 
-      n._childrenWrap.style.display = '';
+      node._childrenWrap
+        .style.display = '';
 
-      n._btn.textContent = '−';
+      node._btn.textContent = '−';
 
     }
 
@@ -389,19 +461,19 @@ function expandAll() {
 
 function collapseAll() {
 
-  allNodes.forEach(n => {
+  allNodes.forEach(node => {
 
     if (
-      n._childrenWrap &&
-      n.manager
+      node._childrenWrap &&
+      node.manager
     ) {
 
-      collapsed.add(n.name);
+      collapsed.add(node.name);
 
-      n._childrenWrap.style.display =
-        'none';
+      node._childrenWrap
+        .style.display = 'none';
 
-      n._btn.textContent = '+';
+      node._btn.textContent = '+';
 
     }
 
@@ -430,8 +502,8 @@ function revealAncestors(node) {
 
       collapsed.delete(mgr.name);
 
-      mgr._childrenWrap.style.display =
-        '';
+      mgr._childrenWrap
+        .style.display = '';
 
       mgr._btn.textContent = '−';
 
@@ -441,16 +513,16 @@ function revealAncestors(node) {
   }
 }
 
-function doSearch(q) {
+function doSearch(query) {
 
   const term =
-    q.toLowerCase().trim();
+    query.toLowerCase().trim();
 
-  allNodes.forEach(n => {
+  allNodes.forEach(node => {
 
-    if (n._el) {
+    if (node._el) {
 
-      n._el
+      node._el
         .querySelector('.card')
         .classList
         .remove('highlight');
@@ -462,13 +534,13 @@ function doSearch(q) {
   if (!term) return;
 
   const found =
-    allNodes.find(n => {
+    allNodes.find(node => {
 
       const name =
-        n._el.dataset.name || '';
+        node._el.dataset.name || '';
 
       const title =
-        n._el.dataset.title || '';
+        node._el.dataset.title || '';
 
       return (
         name.includes(term) ||
@@ -491,10 +563,9 @@ function doSearch(q) {
   canvas.style.transform =
     `scale(${zoom})`;
 
-  slider.value = zoom * 100;
+  slider.value = 100;
 
-  zoomLabel.textContent =
-    `${zoom * 100}%`;
+  zoomLabel.textContent = '100%';
 
   setTimeout(() => {
 
@@ -542,25 +613,15 @@ function doSearch(q) {
 // ZOOM
 // ─────────────────────────────────────────────
 
-const slider =
-  document.getElementById(
-    'zoom-slider'
-  );
-
-const zoomLabel =
-  document.getElementById(
-    'zoom-label'
-  );
-
 slider.addEventListener(
   'input',
   () => {
 
-    const z =
+    const zoom =
       slider.value / 100;
 
     canvas.style.transform =
-      `scale(${z})`;
+      `scale(${zoom})`;
 
     zoomLabel.textContent =
       slider.value + '%';
@@ -584,7 +645,7 @@ document
   );
 
 // ─────────────────────────────────────────────
-// INITIAL LOAD
+// START
 // ─────────────────────────────────────────────
 
 loadPeople();
