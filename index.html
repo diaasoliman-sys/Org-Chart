@@ -1,653 +1,737 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Org Chart</title>
+  <style>
+    /* ── RESET & BASE ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-// ─────────────────────────────────────────────
-// LOGO
-// ─────────────────────────────────────────────
-
-document.getElementById('logo-img').src = 'logo.jpg.png';
-
-// ─────────────────────────────────────────────
-// GLOBALS
-// ─────────────────────────────────────────────
-
-let people = [];
-let byName = {};
-let roots = [];
-
-const collapsed = new Set();
-const allNodes = [];
-
-const canvas =
-  document.getElementById('org-canvas');
-
-const slider =
-  document.getElementById('zoom-slider');
-
-const zoomLabel =
-  document.getElementById('zoom-label');
-
-// ─────────────────────────────────────────────
-// LOAD GOOGLE SHEET
-// ─────────────────────────────────────────────
-
-async function loadPeople() {
-
-  const SHEET_ID =
-    '1kO9rERWJgxg-OXUn8vOsnx2UydEWWU6P88J23Yhuqi4';
-
-  const SHEET_NAME =
-    'Sheet1';
-
-  const url =
-    `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
-
-  try {
-
-    const response =
-      await fetch(url);
-
-    const data =
-      await response.json();
-
-    people = data
-      .filter(row =>
-        row.Name &&
-        row.Name.trim() !== ''
-      )
-      .map(row => ({
-
-        name:
-          (row.Name || '')
-            .trim(),
-
-        title:
-          (row.Title || '')
-            .trim(),
-
-        manager:
-          row['Direct manager'] &&
-          row['Direct manager']
-            .trim() !== '-' &&
-          row['Direct manager']
-            .trim() !== ''
-            ? row['Direct manager']
-                .trim()
-            : null,
-
-        level:
-          row['Hierarchy Level'] &&
-          row['Hierarchy Level']
-            .trim() !== ''
-            ? Number(
-                row['Hierarchy Level']
-              )
-            : 5
-
-      }));
-
-    buildTree();
-
-  } catch (err) {
-
-    console.error(
-      'Error loading sheet:',
-      err
-    );
-
-  }
-}
-
-// ─────────────────────────────────────────────
-// BUILD TREE
-// ─────────────────────────────────────────────
-
-function buildTree() {
-
-  byName = {};
-  roots = [];
-
-  people.forEach(person => {
-
-    byName[person.name] = {
-
-      ...person,
-
-      children: []
-
-    };
-
-  });
-
-  people.forEach(person => {
-
-    const node =
-      byName[person.name];
-
-    if (
-      !person.manager ||
-      !byName[person.manager]
-    ) {
-
-      roots.push(node);
-
-    } else {
-
-      byName[person.manager]
-        .children
-        .push(node);
-
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f4f8;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
-  });
+    /* ── TOOLBAR ── */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      background: #0d3b6e;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      z-index: 10;
+      flex-wrap: wrap;
+    }
 
-  canvas.innerHTML = '';
+    #logo-img {
+      height: 36px;
+      object-fit: contain;
+      border-radius: 4px;
+    }
 
-  allNodes.length = 0;
+    .toolbar-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-right: auto;
+    }
 
-  roots.forEach(root => {
+    #search {
+      padding: 7px 12px;
+      border-radius: 20px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      width: 200px;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+    #search::placeholder { color: rgba(255,255,255,0.6); }
+    #search:focus { background: rgba(255,255,255,0.25); }
 
-    canvas.appendChild(
-      buildNode(root)
-    );
+    .toolbar-btn {
+      padding: 6px 14px;
+      border-radius: 16px;
+      border: 1.5px solid rgba(255,255,255,0.5);
+      background: transparent;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toolbar-btn:hover { background: rgba(255,255,255,0.15); }
 
-  });
+    .zoom-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
 
-  canvas.style.transform =
-    'scale(0.8)';
+    #zoom-slider {
+      width: 100px;
+      accent-color: #42a5f5;
+      cursor: pointer;
+    }
 
-  collapseAll();
-}
+    #zoom-label {
+      min-width: 38px;
+      text-align: right;
+      font-size: 13px;
+    }
 
-// ─────────────────────────────────────────────
-// COLORS
-// ─────────────────────────────────────────────
+    /* ── STATUS BAR ── */
+    #status-bar {
+      background: #fff3cd;
+      color: #856404;
+      font-size: 13px;
+      padding: 6px 20px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    #status-bar.visible { display: flex; }
+    #status-bar.error { background: #f8d7da; color: #721c24; }
+    #status-bar.success { background: #d1e7dd; color: #0a3622; }
 
-const COLORS = [
+    /* ── CANVAS WRAPPER ── */
+    #canvas-wrap {
+      flex: 1;
+      overflow: auto;
+      padding: 40px;
+      position: relative;
+    }
 
-  '#0d3b6e',
-  '#1565c0',
-  '#00acc1',
-  '#42a5f5',
-  '#7ec8e3',
-  '#90caf9'
+    #org-canvas {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      transform-origin: top center;
+      transition: transform 0.2s;
+      width: max-content;
+      min-width: 100%;
+    }
 
-];
+    /* ── NODE STRUCTURE ── */
+    .node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-function levelColor(level) {
+    .children-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-  return COLORS[
-    Math.min(level, 5)
-  ];
+    .children-row {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 0;
+    }
 
-}
+    .child-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
 
-// ─────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────
+    /* ── CONNECTOR LINES ── */
+    .v-line {
+      width: 2px;
+      height: 24px;
+      background: #b0c4de;
+      flex-shrink: 0;
+    }
 
-function initials(name) {
+    .children-row .child-col > .v-line {
+      height: 20px;
+    }
 
-  return (name || '')
-    .replace(/_TL\d+$/,'')
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(w => w[0].toUpperCase())
-    .join('');
+    /* ── CARD ── */
+    .card {
+      position: relative;
+      width: 160px;
+      border-radius: 12px;
+      padding: 14px 12px 10px;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+      cursor: default;
+      transition: box-shadow 0.2s, transform 0.2s;
+      border-top: 4px solid #ccc;
+      margin: 0 6px;
+    }
 
-}
+    .card:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
 
-function shortName(name) {
+    /* level border colors */
+    .lvl-0 .card { border-top-color: #0d3b6e; }
+    .lvl-1 .card { border-top-color: #1565c0; }
+    .lvl-2 .card { border-top-color: #00acc1; }
+    .lvl-3 .card { border-top-color: #42a5f5; }
+    .lvl-4 .card { border-top-color: #7ec8e3; }
+    .lvl-5 .card { border-top-color: #90caf9; }
 
-  const clean =
-    (name || '')
-      .replace(/_TL\d+$/,'');
+    .card-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 auto 8px;
+      letter-spacing: 0.5px;
+    }
 
-  const parts =
-    clean
-      .split(' ')
-      .filter(Boolean);
+    .card-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a2540;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
 
-  if (parts.length <= 3)
-    return clean;
+    .card-title {
+      font-size: 11px;
+      color: #5a6a85;
+      line-height: 1.3;
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
 
-  return (
-    parts[0] +
-    ' ' +
-    parts[1] +
-    ' ' +
-    parts[parts.length - 1]
-  );
+    .card-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: #eef2ff;
+      color: #3549a0;
+    }
 
-}
+    /* highlight from search */
+    .card.highlight {
+      box-shadow: 0 0 0 3px #f59e0b, 0 6px 20px rgba(245,158,11,0.3);
+      transform: translateY(-2px);
+    }
 
-function badgeLabel(level) {
+    /* ── COLLAPSE BUTTON ── */
+    .collapse-btn {
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #1565c0;
+      color: #fff;
+      font-size: 16px;
+      line-height: 20px;
+      text-align: center;
+      cursor: pointer;
+      z-index: 5;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      transition: background 0.2s;
+      user-select: none;
+    }
+    .collapse-btn:hover { background: #0d3b6e; }
 
-  return [
+    /* ── LOADING SPINNER ── */
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: rgba(240,244,248,0.85);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      z-index: 100;
+    }
+    #loading.hidden { display: none; }
 
-    'Executive',
-    'Director',
-    'Manager',
-    'Senior',
-    'Team Leader',
-    'Staff'
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 5px solid #b0c4de;
+      border-top-color: #1565c0;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-  ][Math.min(level, 5)];
+    .loading-text {
+      font-size: 15px;
+      color: #1a2540;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
 
-}
+  <!-- LOADING OVERLAY -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading org chart…</div>
+  </div>
 
-// ─────────────────────────────────────────────
-// BUILD NODE
-// ─────────────────────────────────────────────
+  <!-- TOOLBAR -->
+  <div id="toolbar">
+    <img id="logo-img" src="logo.jpg.png" alt="Logo"
+         onerror="this.style.display='none'" />
+    <span class="toolbar-title">Organization Chart</span>
 
-function buildNode(node) {
+    <input
+      type="text"
+      id="search"
+      placeholder="Search name or title…"
+    />
 
-  allNodes.push(node);
+    <button class="toolbar-btn" onclick="expandAll()">Expand All</button>
+    <button class="toolbar-btn" onclick="collapseAll()">Collapse All</button>
 
-  const level =
-    node.level !== null &&
-    !isNaN(node.level)
-      ? Number(node.level)
-      : 5;
-
-  const wrap =
-    document.createElement('div');
-
-  wrap.className =
-    `node lvl-${Math.min(level, 5)}`;
-
-  wrap.dataset.name =
-    (node.name || '')
-      .toLowerCase();
-
-  wrap.dataset.title =
-    (node.title || '')
-      .toLowerCase();
-
-  // ── CARD ──
-
-  const card =
-    document.createElement('div');
-
-  card.className = 'card';
-
-  card.innerHTML = `
-
-    <div
-      class="card-avatar"
-      style="
-        background:
-        linear-gradient(
-          135deg,
-          ${levelColor(level)},
-          ${levelColor(
-            Math.min(level + 1, 5)
-          )}
-        )
-      "
-    >
-
-      ${initials(node.name)}
-
+    <div class="zoom-group">
+      <span>Zoom</span>
+      <input
+        type="range"
+        id="zoom-slider"
+        min="30"
+        max="150"
+        value="80"
+      />
+      <span id="zoom-label">80%</span>
     </div>
+  </div>
 
-    <div class="card-name">
+  <!-- STATUS BAR -->
+  <div id="status-bar"></div>
 
-      ${shortName(node.name)}
+  <!-- CANVAS -->
+  <div id="canvas-wrap">
+    <div id="org-canvas"></div>
+  </div>
 
-    </div>
+  <script>
+    // ─────────────────────────────────────────────
+    // GLOBALS
+    // ─────────────────────────────────────────────
 
-    <div class="card-title">
+    let people  = [];
+    let byName  = {};
+    let roots   = [];
 
-      ${node.title || ''}
+    const collapsed = new Set();
+    const allNodes  = [];
 
-    </div>
+    const canvas     = document.getElementById('org-canvas');
+    const slider     = document.getElementById('zoom-slider');
+    const zoomLabel  = document.getElementById('zoom-label');
+    const statusBar  = document.getElementById('status-bar');
+    const loadingEl  = document.getElementById('loading');
 
-    <div class="card-badge">
+    // ─────────────────────────────────────────────
+    // STATUS HELPERS
+    // ─────────────────────────────────────────────
 
-      ${badgeLabel(level)}
+    function showStatus(msg, type = 'info') {
+      statusBar.textContent = msg;
+      statusBar.className   = 'visible ' + type;
+    }
 
-    </div>
+    function hideStatus() {
+      statusBar.className = '';
+    }
 
-  `;
+    function hideLoading() {
+      loadingEl.classList.add('hidden');
+    }
 
-  wrap.appendChild(card);
+    // ─────────────────────────────────────────────
+    // LOAD GOOGLE SHEET
+    // ─────────────────────────────────────────────
 
-  // ─────────────────────────
-  // CHILDREN
-  // ─────────────────────────
+    async function loadPeople() {
 
-  if (
-    node.children &&
-    node.children.length > 0
-  ) {
+      const SHEET_ID   = '1kO9rERWJgxg-OXUn8vOsnx2UydEWWU6P88J23Yhuqi4';
+      const SHEET_NAME = 'Sheet1';
+      const url        = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
 
-    const btn =
-      document.createElement('div');
+      try {
+        showStatus('Fetching data from Google Sheets…', 'info');
 
-    btn.className =
-      'collapse-btn';
+        const response = await fetch(url);
 
-    btn.textContent = '−';
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
 
-    btn.title =
-      'Expand / Collapse';
+        const data = await response.json();
 
-    card.appendChild(btn);
+        if (!Array.isArray(data) || data.length === 0) {
+          throw new Error('Sheet returned no data. Check the Sheet ID and that it is publicly shared.');
+        }
 
-    const childrenWrap =
-      document.createElement('div');
+        people = data
+          .filter(row => row.Name && row.Name.trim() !== '')
+          .map(row => ({
+            name:    (row.Name    || '').trim(),
+            title:   (row.Title   || '').trim(),
+            manager: row['Direct manager'] &&
+                     row['Direct manager'].trim() !== '-' &&
+                     row['Direct manager'].trim() !== ''
+                       ? row['Direct manager'].trim()
+                       : null,
+            level:   row['Hierarchy Level'] &&
+                     row['Hierarchy Level'].trim() !== ''
+                       ? Number(row['Hierarchy Level'])
+                       : 5
+          }));
 
-    childrenWrap.className =
-      'children-wrap';
+        if (people.length === 0) {
+          throw new Error('No valid rows found. Make sure the "Name" column is populated.');
+        }
 
-    const vLine =
-      document.createElement('div');
+        hideStatus();
+        buildTree();
+        hideLoading();
 
-    vLine.className = 'v-line';
-
-    childrenWrap.appendChild(vLine);
-
-    const row =
-      document.createElement('div');
-
-    row.className =
-      'children-row';
-
-    node.children.forEach(child => {
-
-      const col =
-        document.createElement('div');
-
-      col.className =
-        'child-col';
-
-      const childLine =
-        document.createElement('div');
-
-      childLine.className =
-        'v-line';
-
-      col.appendChild(childLine);
-
-      col.appendChild(
-        buildNode(child)
-      );
-
-      row.appendChild(col);
-
-    });
-
-    childrenWrap.appendChild(row);
-
-    wrap.appendChild(childrenWrap);
-
-    node._childrenWrap =
-      childrenWrap;
-
-    node._btn = btn;
-
-    btn.addEventListener(
-      'click',
-      e => {
-
-        e.stopPropagation();
-
-        toggleNode(
-          node.name,
-          childrenWrap,
-          btn
-        );
-
+      } catch (err) {
+        hideLoading();
+        showStatus('⚠ Failed to load data: ' + err.message, 'error');
+        console.error('loadPeople error:', err);
       }
-    );
-  }
-
-  node._el = wrap;
-
-  return wrap;
-}
-
-// ─────────────────────────────────────────────
-// TOGGLE
-// ─────────────────────────────────────────────
-
-function toggleNode(
-  name,
-  wrap,
-  btn
-) {
-
-  if (collapsed.has(name)) {
-
-    collapsed.delete(name);
-
-    wrap.style.display = '';
-
-    btn.textContent = '−';
-
-  } else {
-
-    collapsed.add(name);
-
-    wrap.style.display = 'none';
-
-    btn.textContent = '+';
-
-  }
-}
-
-// ─────────────────────────────────────────────
-// EXPAND / COLLAPSE ALL
-// ─────────────────────────────────────────────
-
-function expandAll() {
-
-  collapsed.clear();
-
-  allNodes.forEach(node => {
-
-    if (node._childrenWrap) {
-
-      node._childrenWrap
-        .style.display = '';
-
-      node._btn.textContent = '−';
-
     }
 
-  });
-}
+    // ─────────────────────────────────────────────
+    // BUILD TREE
+    // ─────────────────────────────────────────────
 
-function collapseAll() {
+    function buildTree() {
 
-  allNodes.forEach(node => {
+      byName = {};
+      roots  = [];
+      collapsed.clear();
+      allNodes.length = 0;
 
-    if (
-      node._childrenWrap &&
-      node.manager
-    ) {
+      people.forEach(person => {
+        byName[person.name] = { ...person, children: [] };
+      });
 
-      collapsed.add(node.name);
+      people.forEach(person => {
+        const node = byName[person.name];
+        if (!person.manager || !byName[person.manager]) {
+          roots.push(node);
+        } else {
+          byName[person.manager].children.push(node);
+        }
+      });
 
-      node._childrenWrap
-        .style.display = 'none';
+      canvas.innerHTML = '';
 
-      node._btn.textContent = '+';
+      if (roots.length === 0) {
+        showStatus('No root nodes found — every person has a manager that does not exist in the sheet.', 'error');
+        return;
+      }
 
+      roots.forEach(root => {
+        canvas.appendChild(buildNode(root));
+      });
+
+      // Initial zoom
+      const zoom = 0.8;
+      canvas.style.transform = `scale(${zoom})`;
+      slider.value           = 80;
+      zoomLabel.textContent  = '80%';
+
+      collapseAll();
     }
 
-  });
-}
+    // ─────────────────────────────────────────────
+    // COLORS
+    // ─────────────────────────────────────────────
 
-// ─────────────────────────────────────────────
-// SEARCH
-// ─────────────────────────────────────────────
+    const COLORS = [
+      '#0d3b6e', '#1565c0', '#00acc1',
+      '#42a5f5', '#7ec8e3', '#90caf9'
+    ];
 
-function revealAncestors(node) {
-
-  let current = node;
-
-  while (current.manager) {
-
-    const mgr =
-      byName[current.manager];
-
-    if (!mgr) break;
-
-    if (
-      mgr._childrenWrap &&
-      collapsed.has(mgr.name)
-    ) {
-
-      collapsed.delete(mgr.name);
-
-      mgr._childrenWrap
-        .style.display = '';
-
-      mgr._btn.textContent = '−';
-
+    function levelColor(level) {
+      return COLORS[Math.min(level, 5)];
     }
 
-    current = mgr;
-  }
-}
+    // ─────────────────────────────────────────────
+    // HELPERS
+    // ─────────────────────────────────────────────
 
-function doSearch(query) {
-
-  const term =
-    query.toLowerCase().trim();
-
-  allNodes.forEach(node => {
-
-    if (node._el) {
-
-      node._el
-        .querySelector('.card')
-        .classList
-        .remove('highlight');
-
+    function initials(name) {
+      return (name || '')
+        .replace(/_TL\d+$/, '')
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(w => w[0].toUpperCase())
+        .join('');
     }
 
-  });
+    function shortName(name) {
+      const clean = (name || '').replace(/_TL\d+$/, '');
+      const parts = clean.split(' ').filter(Boolean);
+      if (parts.length <= 3) return clean;
+      return parts[0] + ' ' + parts[1] + ' ' + parts[parts.length - 1];
+    }
 
-  if (!term) return;
+    function badgeLabel(level) {
+      return ['Executive','Director','Manager','Senior','Team Leader','Staff'][Math.min(level, 5)];
+    }
 
-  const found =
-    allNodes.find(node => {
+    // ─────────────────────────────────────────────
+    // BUILD NODE
+    // ─────────────────────────────────────────────
 
-      const name =
-        node._el.dataset.name || '';
+    function buildNode(node) {
 
-      const title =
-        node._el.dataset.title || '';
+      allNodes.push(node);
 
-      return (
-        name.includes(term) ||
-        title.includes(term)
-      );
+      const level = node.level !== null && !isNaN(node.level)
+        ? Number(node.level)
+        : 5;
 
+      const wrap       = document.createElement('div');
+      wrap.className   = `node lvl-${Math.min(level, 5)}`;
+      wrap.dataset.name  = (node.name  || '').toLowerCase();
+      wrap.dataset.title = (node.title || '').toLowerCase();
+
+      // ── CARD ──
+      const card     = document.createElement('div');
+      card.className = 'card';
+
+      const gradA = levelColor(level);
+      const gradB = levelColor(Math.min(level + 1, 5));
+
+      card.innerHTML = `
+        <div class="card-avatar" style="background:linear-gradient(135deg,${gradA},${gradB})">
+          ${initials(node.name)}
+        </div>
+        <div class="card-name">${escHtml(shortName(node.name))}</div>
+        <div class="card-title">${escHtml(node.title || '')}</div>
+        <div class="card-badge">${badgeLabel(level)}</div>
+      `;
+
+      wrap.appendChild(card);
+
+      // ── CHILDREN ──
+      if (node.children && node.children.length > 0) {
+
+        const btn       = document.createElement('div');
+        btn.className   = 'collapse-btn';
+        btn.textContent = '−';
+        btn.title       = 'Expand / Collapse';
+        card.appendChild(btn);
+
+        const childrenWrap       = document.createElement('div');
+        childrenWrap.className   = 'children-wrap';
+
+        const vLine       = document.createElement('div');
+        vLine.className   = 'v-line';
+        childrenWrap.appendChild(vLine);
+
+        const row       = document.createElement('div');
+        row.className   = 'children-row';
+
+        node.children.forEach(child => {
+          const col       = document.createElement('div');
+          col.className   = 'child-col';
+
+          const childLine       = document.createElement('div');
+          childLine.className   = 'v-line';
+          col.appendChild(childLine);
+          col.appendChild(buildNode(child));
+          row.appendChild(col);
+        });
+
+        childrenWrap.appendChild(row);
+        wrap.appendChild(childrenWrap);
+
+        node._childrenWrap = childrenWrap;
+        node._btn          = btn;
+
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          toggleNode(node.name, childrenWrap, btn);
+        });
+      }
+
+      node._el = wrap;
+      return wrap;
+    }
+
+    // ─────────────────────────────────────────────
+    // XSS SAFETY
+    // ─────────────────────────────────────────────
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ─────────────────────────────────────────────
+    // TOGGLE
+    // ─────────────────────────────────────────────
+
+    function toggleNode(name, wrap, btn) {
+      if (collapsed.has(name)) {
+        collapsed.delete(name);
+        wrap.style.display = '';
+        btn.textContent    = '−';
+      } else {
+        collapsed.add(name);
+        wrap.style.display = 'none';
+        btn.textContent    = '+';
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // EXPAND / COLLAPSE ALL
+    // ─────────────────────────────────────────────
+
+    function expandAll() {
+      collapsed.clear();
+      allNodes.forEach(node => {
+        if (node._childrenWrap) {
+          node._childrenWrap.style.display = '';
+          node._btn.textContent            = '−';
+        }
+      });
+    }
+
+    function collapseAll() {
+      allNodes.forEach(node => {
+        if (node._childrenWrap && node.manager) {
+          collapsed.add(node.name);
+          node._childrenWrap.style.display = 'none';
+          node._btn.textContent            = '+';
+        }
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // SEARCH
+    // ─────────────────────────────────────────────
+
+    function revealAncestors(node) {
+      let current = node;
+      while (current.manager) {
+        const mgr = byName[current.manager];
+        if (!mgr) break;
+        if (mgr._childrenWrap && collapsed.has(mgr.name)) {
+          collapsed.delete(mgr.name);
+          mgr._childrenWrap.style.display = '';
+          mgr._btn.textContent            = '−';
+        }
+        current = mgr;
+      }
+    }
+
+    function doSearch(query) {
+
+      // clear old highlights
+      allNodes.forEach(node => {
+        if (node._el) {
+          node._el.querySelector('.card').classList.remove('highlight');
+        }
+      });
+
+      const term = query.toLowerCase().trim();
+      if (!term) return;
+
+      // find ALL matches
+      const found = allNodes.filter(node => {
+        const name  = node._el ? node._el.dataset.name  || '' : '';
+        const title = node._el ? node._el.dataset.title || '' : '';
+        return name.includes(term) || title.includes(term);
+      });
+
+      if (found.length === 0) {
+        showStatus(`No results for "${query}"`, 'info');
+        return;
+      }
+
+      hideStatus();
+
+      // highlight all, scroll to first
+      found.forEach(node => {
+        revealAncestors(node);
+        node._el.querySelector('.card').classList.add('highlight');
+      });
+
+      const firstCard = found[0]._el.querySelector('.card');
+
+      canvas.style.transform = 'scale(1)';
+      slider.value           = 100;
+      zoomLabel.textContent  = '100%';
+
+      setTimeout(() => {
+        const wrap     = document.getElementById('canvas-wrap');
+        const cardRect = firstCard.getBoundingClientRect();
+        const wrapRect = wrap.getBoundingClientRect();
+
+        wrap.scrollTo({
+          left: cardRect.left - wrapRect.left + wrap.scrollLeft
+                - wrap.clientWidth / 2 + cardRect.width / 2,
+          top:  cardRect.top  - wrapRect.top  + wrap.scrollTop
+                - wrap.clientHeight / 2 + cardRect.height / 2,
+          behavior: 'smooth'
+        });
+      }, 300);
+    }
+
+    // ─────────────────────────────────────────────
+    // ZOOM
+    // ─────────────────────────────────────────────
+
+    slider.addEventListener('input', () => {
+      const zoom = slider.value / 100;
+      canvas.style.transform = `scale(${zoom})`;
+      zoomLabel.textContent  = slider.value + '%';
     });
 
-  if (!found) return;
+    // ─────────────────────────────────────────────
+    // SEARCH INPUT
+    // ─────────────────────────────────────────────
 
-  revealAncestors(found);
-
-  const card =
-    found._el.querySelector('.card');
-
-  card.classList.add('highlight');
-
-  const zoom = 1;
-
-  canvas.style.transform =
-    `scale(${zoom})`;
-
-  slider.value = 100;
-
-  zoomLabel.textContent = '100%';
-
-  setTimeout(() => {
-
-    const wrap =
-      document.getElementById(
-        'canvas-wrap'
-      );
-
-    const cardRect =
-      card.getBoundingClientRect();
-
-    const wrapRect =
-      wrap.getBoundingClientRect();
-
-    const offsetLeft =
-      cardRect.left -
-      wrapRect.left +
-      wrap.scrollLeft;
-
-    const offsetTop =
-      cardRect.top -
-      wrapRect.top +
-      wrap.scrollTop;
-
-    wrap.scrollTo({
-
-      left:
-        offsetLeft -
-        wrap.clientWidth / 2 +
-        cardRect.width / 2,
-
-      top:
-        offsetTop -
-        wrap.clientHeight / 2 +
-        cardRect.height / 2,
-
-      behavior: 'smooth'
-
-    });
-
-  }, 300);
-}
-
-// ─────────────────────────────────────────────
-// ZOOM
-// ─────────────────────────────────────────────
-
-slider.addEventListener(
-  'input',
-  () => {
-
-    const zoom =
-      slider.value / 100;
-
-    canvas.style.transform =
-      `scale(${zoom})`;
-
-    zoomLabel.textContent =
-      slider.value + '%';
-
-  }
-);
-
-// ─────────────────────────────────────────────
-// SEARCH INPUT
-// ─────────────────────────────────────────────
-
-document
-  .getElementById('search')
-  .addEventListener(
-    'input',
-    function() {
-
+    document.getElementById('search').addEventListener('input', function () {
       doSearch(this.value);
+    });
 
-    }
-  );
+    // ─────────────────────────────────────────────
+    // START
+    // ─────────────────────────────────────────────
 
-// ─────────────────────────────────────────────
-// START
-// ─────────────────────────────────────────────
-
-loadPeople();
-
-</script>
+    loadPeople();
+  </script>
+</body>
+</html>
